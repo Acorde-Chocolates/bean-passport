@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Passaporte do lote · Acorde Chocolates</title>
-  <meta name="description" content="Confira a jornada deste lote de chocolate, do grão à barra, selada na rede Solana.">
+  <title>Batch passport · Acorde Chocolates</title>
+  <meta name="description" content="Check this chocolate batch's journey, from bean to bar, sealed on the Solana network.">
   <meta name="theme-color" content="#F2A93B">
   <link rel="icon" href="img/favicon-100.webp" type="image/webp" sizes="32x32">
   <link rel="icon" href="img/favicon-300.webp" type="image/webp" sizes="192x192">
@@ -17,7 +17,7 @@
 <body>
   <p class="faixa-simulacao" id="faixa-simulacao" hidden></p>
 
-  <main class="phone" aria-label="Passaporte do lote">
+  <main class="phone" data-i18n-aria="main.label" aria-label="Batch passport">
     <header class="hero">
       <svg class="swirl" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".55">
         <path d="M-40 30 C 40 0, 110 70, 200 34 S 360 0, 440 40"/>
@@ -26,11 +26,17 @@
         <path d="M-40 204 C 60 164, 140 244, 230 200 S 380 164, 440 218"/>
         <path d="M262 -20 C 302 40, 252 90, 322 140 S 382 230, 362 290"/>
       </svg>
-      <div class="brand">
-        <img src="img/logo-acorde.jpg" alt="Logo da Acorde Chocolates" width="50" height="50">
-        <div><b>Bean Passport</b><span>Acorde Chocolates · do grão à barra</span></div>
+      <div class="hero-top">
+        <div class="brand">
+          <img src="img/logo-acorde.jpg" data-i18n-alt="brand.logoAlt" alt="Acorde Chocolates logo" width="50" height="50">
+          <div><b>Bean Passport</b><span data-i18n="brand.tagline">Acorde Chocolates · bean to bar</span></div>
+        </div>
+        <div class="lang" role="group" data-i18n-aria="lang.label" aria-label="Language">
+          <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="pt" lang="pt-BR" aria-pressed="false">PT</button>
+        </div>
       </div>
-      <p class="kicker">Passaporte do lote</p>
+      <p class="kicker" data-i18n="kicker">Batch passport</p>
       <h1 class="lot" id="lot">…</h1>
       <p class="meta" id="meta"></p>
     </header>
@@ -41,43 +47,44 @@
     <div id="passaporte" hidden>
       <section class="summary" id="summary" aria-live="polite"></section>
 
-      <div class="journey-head"><h2>Do grão à barra</h2></div>
+      <div class="journey-head"><h2 data-i18n="journey">From bean to bar</h2></div>
       <ol class="journey" id="journey"></ol>
-      <p class="cap">Cada etapa é selada na rede no dia em que termina. Os percentuais são calculados nesta página e não fazem parte do selo.</p>
+      <p class="cap" data-i18n="cap">Each step is sealed on the network after it is completed, and the page shows when. Percentages are computed on this page and are not part of the seal.</p>
 
       <details class="verify">
-        <summary>Confira você mesmo</summary>
+        <summary data-i18n="verify.title">Verify it yourself</summary>
         <div id="verify-body"></div>
       </details>
 
       <section class="tamper" aria-labelledby="t-title">
-        <h3 id="t-title">Teste alterar um número</h3>
-        <p>Altere um valor nesta página e veja os selos reagirem. Nada é salvo.</p>
+        <h3 id="t-title" data-i18n="tamper.title">Try changing a number</h3>
+        <p data-i18n="tamper.intro">Change a value on this page and watch the seals react. Nothing is saved.</p>
         <div class="row">
-          <label for="t-step">Etapa<select id="t-step"></select></label>
-          <label for="t-field">Campo<select id="t-field">
-            <option value="output_g">Saída (g)</option>
-            <option value="input_g">Entrada (g)</option>
-            <option value="byproduct_g">Casca (g)</option>
-            <option value="date">Data</option>
+          <label for="t-step"><span data-i18n="tamper.step">Step</span><select id="t-step"></select></label>
+          <label for="t-field"><span data-i18n="tamper.field">Field</span><select id="t-field">
+            <option value="output_g" data-i18n="tamper.output">Output (g)</option>
+            <option value="input_g" data-i18n="tamper.input">Input (g)</option>
+            <option value="byproduct_g" data-i18n="tamper.byproduct">Husk (g)</option>
+            <option value="date" data-i18n="tamper.date">Date</option>
           </select></label>
-          <label class="wide" for="t-value">Novo valor<input id="t-value" autocomplete="off" inputmode="numeric"></label>
+          <label class="wide" for="t-value"><span data-i18n="tamper.value">New value</span><input id="t-value" autocomplete="off" inputmode="numeric"></label>
         </div>
         <div class="btns">
-          <button class="btn primary" type="button" id="t-apply">Alterar nesta página</button>
-          <button class="btn ghost" type="button" id="t-reset">Desfazer alterações</button>
+          <button class="btn primary" type="button" id="t-apply" data-i18n="tamper.apply">Change on this page</button>
+          <button class="btn ghost" type="button" id="t-reset" data-i18n="tamper.reset">Undo changes</button>
         </div>
         <p class="live" id="t-live" aria-live="polite"></p>
       </section>
     </div>
 
     <footer class="limit">
-      <p>Esta página prova que o registro não mudou desde que foi selado, e quando foi selado. Ela não prova que os números são verdadeiros: um número errado digitado antes do selo continua errado, e o selo atesta isso fielmente.</p>
-      <p>Solana devnet · registro canônico v1 · <a href="https://github.com/Acorde-Chocolates/bean-passport">código aberto</a></p>
+      <p data-i18n="footer.limit">This page proves the record hasn't changed since it was sealed, and when it was sealed. It doesn't prove the numbers are true: a wrong number typed before sealing stays wrong, and the seal attests it faithfully.</p>
+      <p data-i18n-html="footer.meta">Solana devnet · canonical record v1 · <a href="https://github.com/Acorde-Chocolates/bean-passport">open source</a></p>
     </footer>
   </main>
 
   <script src="../js/config.js" defer></script>
+  <script src="i18n.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

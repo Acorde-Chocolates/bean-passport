@@ -198,3 +198,8 @@ select, input { width: 100%; min-width: 0; font: 400 16px/1.2 var(--body); paddi
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .ico path { stroke-dashoffset: 0; }
 }
+
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.lang { display: inline-flex; flex: none; border: 1.5px solid var(--saffron-ink); border-radius: 999px; overflow: hidden; }
+.lang button { font: 700 11.5px/1 var(--body); letter-spacing: .08em; padding: 7px 10px; border: 0; background: transparent; color: var(--saffron-ink); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--saffron-ink); color: var(--saffron); }

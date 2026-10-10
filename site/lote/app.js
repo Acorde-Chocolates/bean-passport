@@ -1,19 +1,15 @@
-// Página pública do lote (visual e lógica do mockup v2 do Emerson, em português).
+// Página pública do lote (visual e lógica do mockup v2 do Emerson), em inglês e português.
 // Lê data/lots/<id>.json, recalcula o hash de cada etapa no navegador e compara com o selo (memo) na rede.
-// Enquanto a leitura da rede não está ligada, ?simular=<cenário> mostra cada estado com selos simulados.
+// ?simular=<cenário> mostra cada estado com selos simulados; ?lang=en|pt escolhe o idioma.
+
+const { t } = window.BP_I18N;
 
 const HEADER = ["lot", "product", "producer", "municipality", "state", "origin_lot", "purchase_date"];
 const STEP = ["n", "step", "date", "input_g", "output_g", "byproduct_g", "units", "profile"];
 const ORDEM = ["roasting", "winnowing", "grinding", "tempering_molding", "packaging"];
-
-const LABEL = { roasting: "Torra", winnowing: "Descasque", grinding: "Moagem (melanger)", tempering_molding: "Temperagem e moldagem", packaging: "Embalagem" };
-const FLOW = { roasting: ["Cacau", "torrado"], winnowing: ["Torrado", "nibs"], grinding: ["Nibs", "massa"], tempering_molding: ["Massa", "barras"], packaging: ["Barras", "embaladas"] };
 const UF = { BA: "Bahia", PA: "Pará", ES: "Espírito Santo", RO: "Rondônia", AM: "Amazonas", MG: "Minas Gerais", SP: "São Paulo" };
 
-const PILL = {
-  verified: ["Verificado", "ok"], changed: ["Alterado", "bad"], wrong_signer: ["Outra carteira", "warn"], not_found: ["Selo não encontrado", "bad"],
-  network_error: ["Sem conexão", "off"], pending: ["Ainda não selado", "wait"], upcoming: ["Ainda não registrado", "wait"], checking: ["Conferindo…", "check"]
-};
+const PILL_CLS = { verified: "ok", changed: "bad", wrong_signer: "warn", not_found: "bad", network_error: "off", pending: "wait", upcoming: "wait", checking: "check" };
 const CHECK_ICON = '<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3l2.2 2.2 4.8-4.9"/></svg>';
 
 // Mesmo formato de lote aceito no memo (spec v1)
@@ -32,7 +28,7 @@ const CENARIOS = {
   "erro-rede": { semRede: true },
 };
 
-const estado = { original: null, ancoras: [], selos: {}, edits: {}, cenario: null, carteira: "" };
+const estado = { original: null, ancoras: [], selos: {}, edits: {}, cenario: null, carteira: "", aviso: null };
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
 let runId = 0;
@@ -42,10 +38,12 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const short = s => s.slice(0, 4) + "…" + s.slice(-4);
 const isNum = v => /^\d+$/.test(v);
-const grams = v => v === "" ? "não registrado" : (isNum(v) ? Number(v).toLocaleString("pt-BR") : v) + " g";
-const day = d => { const t = new Date(d + "T12:00:00"); return isNaN(t) ? d : t.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }); };
-const stamp = s => { const t = new Date(s); return t.toLocaleDateString("pt-BR", { day: "numeric", month: "short" }) + ", " + t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); };
-const pct = (a, b) => (a / b * 100).toFixed(1).replace(".", ",") + "%";
+const label = code => t("steps")[code] || code;
+const flow = code => t("flow")[code] || t("flow").fallback;
+const grams = v => v === "" ? t("notRecorded") : (isNum(v) ? Number(v).toLocaleString(t("locale")) : v) + " g";
+const day = d => { const x = new Date(d + "T12:00:00"); return isNaN(x) ? d : x.toLocaleDateString(t("locale"), { day: "numeric", month: "short", year: "numeric" }); };
+const stamp = s => { const x = new Date(s); return x.toLocaleDateString(t("locale"), { day: "numeric", month: "short" }) + ", " + x.toLocaleTimeString(t("locale"), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); };
+const pct = (a, b) => (a / b * 100).toFixed(1).replace(".", t("decimal")) + "%";
 const liOf = n => document.querySelector(`#journey li[data-n="${n}"]`);
 const keyOf = s => s.upcoming ? "upcoming" : s.status;
 
@@ -162,60 +160,59 @@ async function evaluate() {
 
 function lagText(s) {
   const lag = Math.round((Date.parse(s.seal.sealedAt.slice(0, 10) + "T12:00:00") - Date.parse(s.rec.date + "T12:00:00")) / 86400000);
-  if (!isFinite(lag) || lag <= 0) return "no mesmo dia da etapa";
-  return lag === 1 ? "1 dia depois da etapa" : `${lag} dias depois da etapa`;
+  if (!isFinite(lag) || lag <= 0) return t("lag.same");
+  return lag === 1 ? t("lag.one") : t("lag.many", lag);
 }
 
 function derived(r, current) {
   if (!isNum(r.input_g) || !isNum(r.output_g)) return "";
-  if (r.step === "roasting") return `Perda na torra: ${pct(r.input_g - r.output_g, r.input_g)}`;
-  if (r.step === "winnowing") { const green = current.steps[0].input_g; return isNum(green) ? `Nibs: ${pct(r.output_g, green)} do cacau que entrou` : ""; }
-  if (r.step === "tempering_molding" && isNum(r.units) && Number(r.units) > 0) return `${r.units} barras de ${Math.round(r.output_g / r.units)} g`;
+  if (r.step === "roasting") return t("derived.roast", pct(r.input_g - r.output_g, r.input_g));
+  if (r.step === "winnowing") { const green = current.steps[0].input_g; return isNum(green) ? t("derived.nibs", pct(r.output_g, green)) : ""; }
+  if (r.step === "tempering_molding" && isNum(r.units) && Number(r.units) > 0) return t("derived.bars", r.units, Math.round(r.output_g / r.units));
   return "";
 }
 
 function linkTransacao(seal) {
   if (!seal?.signature) return "";
-  const sig = `<span class="sig" title="Assinatura da transação">${esc(short(seal.signature))}</span>`;
-  if (estado.cenario) return sig + `<span class="fake-link" title="Simulação: na página real, abre a transação no Solana Explorer (devnet)">Explorer ↗</span>`;
+  const sig = `<span class="sig" title="${esc(t("seal.sigTitle"))}">${esc(short(seal.signature))}</span>`;
+  if (estado.cenario) return sig + `<span class="fake-link" title="${esc(t("seal.simTitle"))}">Explorer ↗</span>`;
   return sig + `<a class="explorer" href="https://explorer.solana.com/tx/${encodeURIComponent(seal.signature)}?cluster=devnet" target="_blank" rel="noopener">Explorer ↗</a>`;
 }
 
 function sealLine(s, key) {
-  if (key === "checking") return `<span>Buscando o selo na Solana devnet…</span>`;
+  if (key === "checking") return `<span>${t("seal.checking")}</span>`;
   const sig = linkTransacao(s.seal);
   switch (key) {
-    case "verified": return `<span>Selado em ${stamp(s.seal.sealedAt)} (BRT) · ${lagText(s)}</span>${sig}`;
-    case "changed": return `<span>Selado em ${stamp(s.seal.sealedAt)} (BRT) · os dados acima não conferem mais</span>${sig}`;
-    case "wrong_signer": return `<span>Selado por ${esc(short(s.seal.signer))}, não pela Acorde</span>${sig}`;
-    case "not_found": return `<span>O selo indicado não existe na Solana devnet</span>${sig}`;
-    case "network_error": return `<span>Não foi possível acessar a rede para conferir este selo</span>${sig}`;
-    case "upcoming": return `<span>Esta etapa ainda não aconteceu.</span>`;
-    default: return `<span>Registrado. Aguardando o selo.</span>`;
+    case "verified": return `<span>${t("seal.verified", stamp(s.seal.sealedAt), lagText(s))}</span>${sig}`;
+    case "changed": return `<span>${t("seal.changed", stamp(s.seal.sealedAt))}</span>${sig}`;
+    case "wrong_signer": return `<span>${t("seal.wrongSigner", esc(short(s.seal.signer)))}</span>${sig}`;
+    case "not_found": return `<span>${t("seal.notFound")}</span>${sig}`;
+    case "network_error": return `<span>${t("seal.network")}</span>${sig}`;
+    case "upcoming": return `<span>${t("seal.upcoming")}</span>`;
+    default: return `<span>${t("seal.pending")}</span>`;
   }
 }
 
 function paint(li, s, current, override) {
   const key = override || keyOf(s);
-  const [label, cls] = PILL[key];
   const lineOn = !override && !!s.seal;
-  li.className = `step s-${cls}${s.upcoming ? " upcoming" : ""}${lineOn ? " line-on" : ""}`;
-  const pill = `<span class="pill${key === "pending" ? " dashed" : ""}">${key === "verified" ? CHECK_ICON : ""}${label}</span>`;
+  li.className = `step s-${PILL_CLS[key]}${s.upcoming ? " upcoming" : ""}${lineOn ? " line-on" : ""}`;
+  const pill = `<span class="pill${key === "pending" ? " dashed" : ""}">${key === "verified" ? CHECK_ICON : ""}${t("pill")[key]}</span>`;
   if (s.upcoming) {
-    li.innerHTML = `<span class="dot">${s.n}</span><div class="body"><div class="step-head"><h3 class="step-name">${LABEL[s.step]}</h3>${pill}</div><p class="seal">${sealLine(s, key)}</p></div>`;
+    li.innerHTML = `<span class="dot">${s.n}</span><div class="body"><div class="step-head"><h3 class="step-name">${esc(label(s.step))}</h3>${pill}</div><p class="seal">${sealLine(s, key)}</p></div>`;
     return;
   }
   const r = s.rec;
-  const [a, b] = FLOW[r.step] || ["Entrada", "saída"];
+  const [a, b] = flow(r.step);
   const facts = [
-    `<span>Produzido em <span class="w">${esc(day(r.date))}</span></span>`,
+    `<span>${t("produced", esc(day(r.date)))}</span>`,
     `<span>${a} <span class="w">${esc(grams(r.input_g))}</span> → ${b} <span class="w">${esc(grams(r.output_g))}</span></span>`
   ];
-  if (r.byproduct_g !== "") facts.push(`<span>Casca <span class="w">${esc(grams(r.byproduct_g))}</span></span>`);
-  if (r.units !== "") facts.push(`<span><span class="w">${esc(r.units)}</span> barras</span>`);
+  if (r.byproduct_g !== "") facts.push(`<span>${t("husk", esc(grams(r.byproduct_g)))}</span>`);
+  if (r.units !== "") facts.push(`<span>${t("bars", esc(r.units))}</span>`);
   const d = derived(r, current);
   li.innerHTML = `<span class="dot">${s.n}</span><div class="body">` +
-    `<div class="step-head"><h3 class="step-name">${esc(LABEL[r.step] || r.step)}${s.edited ? '<span class="edited">editado aqui</span>' : ""}</h3>${pill}</div>` +
+    `<div class="step-head"><h3 class="step-name">${esc(label(r.step))}${s.edited ? `<span class="edited">${t("edited")}</span>` : ""}</h3>${pill}</div>` +
     `<p class="facts">${facts.join("")}</p>${d ? `<p class="derived">${esc(d)}</p>` : ""}<p class="seal">${sealLine(s, key)}</p></div>`;
 }
 
@@ -228,11 +225,11 @@ function shake(li) {
 
 function summaryChecking(k, total) {
   const el = $("#summary");
-  const text = k === 0 ? "Conectando…" : `Etapa ${k} de ${total}`;
+  const text = k === 0 ? t("sum.connecting") : t("sum.progress", k, total);
   const prog = $("#sum-progress");
   if (el.classList.contains("s-check") && prog) { prog.textContent = text; return; }
   el.className = "summary s-check";
-  el.innerHTML = `<span class="mark spin" aria-hidden="true"></span><div class="swap"><h3>Conferindo os selos na Solana devnet</h3><p id="sum-progress">${text}</p></div>`;
+  el.innerHTML = `<span class="mark spin" aria-hidden="true"></span><div class="swap"><h3>${t("sum.checking")}</h3><p id="sum-progress">${text}</p></div>`;
 }
 
 function renderSummary(steps) {
@@ -244,51 +241,51 @@ function renderSummary(steps) {
   let cls = "ok", mark = "✓", title, text, retry = false;
   if (fail) {
     mark = "!";
-    const name = LABEL[fail.rec.step];
-    if (fail.status === "changed") { cls = "bad"; title = "O registro difere do que foi selado"; text = `A alteração começa na etapa ${fail.n}, ${name}. Todos os selos depois dela também falham, porque cada selo cobre as etapas anteriores.`; }
-    else if (fail.status === "wrong_signer") { cls = "warn"; title = `A etapa ${fail.n} não foi selada pela Acorde`; text = `O selo veio de outra carteira (${esc(short(fail.seal.signer))}). Só valem selos da carteira da Acorde.`; }
-    else { cls = "bad"; title = `Selo da etapa ${fail.n} não encontrado`; text = "O arquivo do lote aponta para um selo que não existe na Solana devnet."; }
+    const name = label(fail.rec.step);
+    if (fail.status === "changed") { cls = "bad"; title = t("sum.changedTitle"); text = t("sum.changedText", fail.n, name); }
+    else if (fail.status === "wrong_signer") { cls = "warn"; title = t("sum.signerTitle", fail.n); text = t("sum.signerText", esc(short(fail.seal.signer))); }
+    else { cls = "bad"; title = t("sum.notFoundTitle", fail.n); text = t("sum.notFoundText"); }
   } else if (semRede) {
-    cls = "off"; mark = "?"; title = "Não foi possível acessar a rede"; retry = true;
-    text = "Não conseguimos conferir os selos agora. Isso não indica adulteração. Tente de novo em instantes.";
+    cls = "off"; mark = "?"; title = t("sum.networkTitle"); retry = true;
+    text = t("sum.networkText");
   } else if (sealed === 0) {
-    cls = "wait"; mark = "…"; title = "Nenhuma etapa selada ainda";
-    const parts = [`${steps.length - upcoming} de ${ORDEM.length} etapas registradas, aguardando o selo`];
-    if (upcoming) parts.push(`${upcoming} ainda por acontecer`);
+    cls = "wait"; mark = "…"; title = t("sum.noneTitle");
+    const parts = [t("sum.noneRecorded", steps.length - upcoming, ORDEM.length)];
+    if (upcoming) parts.push(t("sum.upcoming", upcoming));
     text = parts.join(" · ") + ".";
   } else {
-    title = "Sem alterações desde o selo";
-    const parts = [`${sealed} de ${ORDEM.length} etapas seladas pela Acorde`];
-    if (pending) parts.push(pending === 1 ? "1 registrada aguardando o selo" : `${pending} registradas aguardando o selo`);
-    if (upcoming) parts.push(`${upcoming} ainda por acontecer`);
+    title = t("sum.okTitle");
+    const parts = [t("sum.sealed", sealed, ORDEM.length)];
+    if (pending) parts.push(t("sum.pending", pending));
+    if (upcoming) parts.push(t("sum.upcoming", upcoming));
     text = parts.join(" · ") + ".";
   }
   const el = $("#summary");
   el.className = "summary s-" + cls;
   el.innerHTML = `<span class="mark" aria-hidden="true">${mark}</span><div class="swap"><h3>${title}</h3><p>${text}</p>` +
-    (retry ? `<button class="btn ghost" type="button" id="tentar-de-novo">Tentar de novo</button>` : "") + `</div>`;
+    (retry ? `<button class="btn ghost" type="button" id="tentar-de-novo">${t("retry")}</button>` : "") + `</div>`;
   if (retry) $("#tentar-de-novo").addEventListener("click", play);
 }
 
 function verifyPending() {
-  $("#verify-body").innerHTML = `<p class="note">Disponível quando a conferência terminar.</p>`;
+  $("#verify-body").innerHTML = `<p class="note">${t("verify.pending")}</p>`;
 }
 
 async function renderVerify(steps, current) {
   const box = $("#verify-body");
   const last = [...steps].reverse().find(s => s.seal);
-  if (!last) { box.innerHTML = `<p class="note">Nenhuma etapa foi selada ainda.</p>`; return; }
+  if (!last) { box.innerHTML = `<p class="note">${t("verify.none")}</p>`; return; }
   const canon = canonicalV1(current, last.n);
   const hash = await sha256Hex(canon);
   const reachable = !last.seal.erro && last.seal.found;
   const match = reachable && last.seal.memo === `v1|${current.lot}|${last.n}|${hash}`;
   box.innerHTML = `<dl class="kv">` +
-    `<div><dt>Registro até a etapa ${last.n}</dt><dd><code class="code">${esc(canon)}</code></dd></div>` +
-    `<div><dt>SHA-256 calculado no seu navegador</dt><dd><code class="code">${hash}</code></dd></div>` +
-    `<div><dt>Memo na rede</dt><dd><code class="code">${reachable ? esc(last.seal.memo) : "não foi possível carregar"}</code></dd></div>` +
-    `<div><dt>Confere</dt><dd>${reachable ? (match ? "Sim" : "Não") : "Desconhecido"}</dd></div>` +
-    (estado.carteira ? `<div><dt>Carteira da Acorde</dt><dd><code class="code">${esc(estado.carteira)}</code></dd></div>` : "") +
-    `<div><dt>Confira no terminal</dt><dd><code class="code">printf '%s' '${esc(canon)}' | sha256sum</code></dd></div>` +
+    `<div><dt>${t("verify.record", last.n)}</dt><dd><code class="code">${esc(canon)}</code></dd></div>` +
+    `<div><dt>${t("verify.hash")}</dt><dd><code class="code">${hash}</code></dd></div>` +
+    `<div><dt>${t("verify.memo")}</dt><dd><code class="code">${reachable ? esc(last.seal.memo) : t("verify.cantLoad")}</code></dd></div>` +
+    `<div><dt>${t("verify.match")}</dt><dd>${reachable ? (match ? t("verify.yes") : t("verify.no")) : t("verify.unknown")}</dd></div>` +
+    (estado.carteira ? `<div><dt>${t("verify.wallet")}</dt><dd><code class="code">${esc(estado.carteira)}</code></dd></div>` : "") +
+    `<div><dt>${t("verify.terminal")}</dt><dd><code class="code">printf '%s' '${esc(canon)}' | sha256sum</code></dd></div>` +
     `</dl>`;
 }
 
@@ -303,7 +300,7 @@ function fillValue() {
 function syncTamper(current) {
   const sel = $("#t-step");
   const keep = sel.value;
-  sel.innerHTML = current.steps.map(s => `<option value="${esc(s.n)}">${esc(s.n)} · ${esc(LABEL[s.step] || s.step)}</option>`).join("");
+  sel.innerHTML = current.steps.map(s => `<option value="${esc(s.n)}">${esc(s.n)} · ${esc(label(s.step))}</option>`).join("");
   sel.value = current.steps.some(s => s.n === keep) ? keep : (current.steps[1] || current.steps[0]).n;
   fillValue();
 }
@@ -380,10 +377,11 @@ async function refresh(editedN) {
   shown = ev;
 }
 
-function mostrarAviso(titulo, mensagem, comBotao) {
+function mostrarAviso(tituloKey, mensagemKey, comBotao, ...args) {
+  estado.aviso = { tituloKey, mensagemKey, comBotao, args };
   const caixa = $("#aviso");
-  caixa.innerHTML = `<h2>${esc(titulo)}</h2><p>${esc(mensagem)}</p>` +
-    (comBotao ? `<button class="btn primary" type="button" id="aviso-tentar">Tentar de novo</button>` : "");
+  caixa.innerHTML = `<h2>${esc(t(tituloKey))}</h2><p>${esc(t(mensagemKey, ...args))}</p>` +
+    (comBotao ? `<button class="btn primary" type="button" id="aviso-tentar">${t("retry")}</button>` : "");
   if (comBotao) $("#aviso-tentar").addEventListener("click", () => location.reload());
   caixa.hidden = false;
   $("#passaporte").hidden = true;
@@ -392,12 +390,19 @@ function mostrarAviso(titulo, mensagem, comBotao) {
 function preencherTopo(rec) {
   $("#lot").textContent = rec.lot;
   const linhas = [];
-  if (rec.municipality) linhas.push(`Cacau de ${rec.municipality}${rec.state ? ", " + (UF[rec.state] || rec.state) : ""}`);
-  const produtor = [rec.producer && `Produtor ref. ${rec.producer}`, rec.purchase_date && `comprado em ${day(rec.purchase_date)}`].filter(Boolean).join(" · ");
+  if (rec.municipality) linhas.push(t("top.origin", rec.municipality, rec.state ? (UF[rec.state] || rec.state) : ""));
+  const produtor = [rec.producer && t("top.producer", rec.producer), rec.purchase_date && t("top.bought", day(rec.purchase_date))].filter(Boolean).join(" · ");
   if (produtor) linhas.push(produtor);
-  linhas.push(rec.product + (estado.cenario ? " · lote de exemplo" : ""));
+  linhas.push(rec.product + (estado.cenario ? t("top.example") : ""));
   $("#meta").innerHTML = linhas.map(l => `<span>${esc(l)}</span>`).join("");
-  document.title = `Lote ${rec.lot} · ${rec.product} · Acorde Chocolates`;
+  document.title = t("doc.lotTitle", rec.lot, rec.product);
+}
+
+function faixaSimulacao() {
+  const faixa = $("#faixa-simulacao");
+  if (!estado.cenario) { faixa.hidden = true; return; }
+  faixa.innerHTML = t("sim.banner", esc(estado.cenario));
+  faixa.hidden = false;
 }
 
 // Monta os selos simulados a partir do registro original, para o cenário escolhido
@@ -423,18 +428,50 @@ async function prepararSimulacao(nome, record) {
     };
   }
   estado.edits = { ...(sc.edicoes || {}) };
-  const faixa = $("#faixa-simulacao");
-  faixa.innerHTML = `<strong>Modo simulação:</strong> cenário "${esc(nome)}", com selos simulados. Nada aqui foi consultado na rede.`;
-  faixa.hidden = false;
+  faixaSimulacao();
+}
+
+function aplicarTextosFixos() {
+  document.documentElement.lang = t("htmlLang");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+  document.querySelectorAll("[data-i18n-alt]").forEach(el => el.setAttribute("alt", t(el.dataset.i18nAlt)));
+  document.querySelector('meta[name="description"]').setAttribute("content", t("doc.description"));
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === window.BP_I18N.lang)));
+  if (!estado.original) document.title = t("doc.title");
+}
+
+async function trocarIdioma(lang) {
+  if (lang === window.BP_I18N.lang) return;
+  window.BP_I18N.setLang(lang);
+  aplicarTextosFixos();
+  $("#t-live").textContent = "";
+  if (estado.aviso) {
+    const { tituloKey, mensagemKey, comBotao, args } = estado.aviso;
+    mostrarAviso(tituloKey, mensagemKey, comBotao, ...args);
+    return;
+  }
+  if (!estado.original) return;
+  preencherTopo(estado.original);
+  faixaSimulacao();
+  if (!shown) { play(); return; }
+  const ev = await evaluate();
+  ev.steps.forEach(s => paint(liOf(s.n), s, ev.current, null));
+  renderSummary(ev.steps);
+  await renderVerify(ev.steps, ev.current);
+  syncTamper(ev.current);
+  shown = ev;
 }
 
 async function iniciar() {
+  aplicarTextosFixos();
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || "";
 
   if (!FORMATO_LOTE.test(id)) {
     $("#lot").textContent = "—";
-    mostrarAviso("Lote não encontrado", "Abra esta página pelo QR Code da embalagem. Se digitou o endereço, confira o código do lote.");
+    mostrarAviso("err.notFoundTitle", "err.badId", false);
     return;
   }
   $("#lot").textContent = id;
@@ -443,15 +480,15 @@ async function iniciar() {
   try {
     resposta = await fetch(`../data/lots/${id}.json`, { cache: "no-store" });
   } catch {
-    mostrarAviso("Não deu para carregar agora", "Parece que a internet caiu. Confira a conexão e tente de novo.", true);
+    mostrarAviso("err.offlineTitle", "err.offline", true);
     return;
   }
   if (resposta.status === 404) {
-    mostrarAviso("Lote não encontrado", `Não existe passaporte para o lote ${id}. Confira o código impresso na embalagem.`);
+    mostrarAviso("err.notFoundTitle", "err.noPassport", false, id);
     return;
   }
   if (!resposta.ok) {
-    mostrarAviso("Não deu para carregar agora", "O servidor não respondeu como esperado. Tente de novo em instantes.", true);
+    mostrarAviso("err.offlineTitle", "err.server", true);
     return;
   }
 
@@ -469,7 +506,7 @@ async function iniciar() {
     }
     preencherTopo(estado.original);
   } catch {
-    mostrarAviso("O arquivo deste lote está com problema", "Avise a Acorde Chocolates: o passaporte não pôde ser lido.");
+    mostrarAviso("err.fileTitle", "err.file", false);
     return;
   }
 
@@ -477,6 +514,7 @@ async function iniciar() {
   play();
 }
 
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => trocarIdioma(b.dataset.lang)));
 $("#t-step").addEventListener("change", fillValue);
 $("#t-field").addEventListener("change", fillValue);
 $("#t-apply").addEventListener("click", async () => {
@@ -489,16 +527,16 @@ $("#t-apply").addEventListener("click", async () => {
   const bad = steps.filter(s => s.status === "changed").map(s => s.n);
   const step = steps.find(s => String(s.n) === n);
   let msg;
-  if (!step.seal) msg = `A etapa ${n} ainda não foi selada, então não há nada na rede para comparar.`;
-  else if (step.status === "network_error") msg = "Sem conexão com a rede: não dá para comparar agora.";
-  else if (!bad.length) msg = "Mesmo valor do selo. Nada a apontar.";
-  else msg = bad.length === 1 ? `Alterado só nesta página. O selo ${bad[0]} não confere mais.` : `Alterado só nesta página. Os selos ${bad[0]} a ${bad[bad.length - 1]} não conferem mais.`;
+  if (!step.seal) msg = t("tamper.notSealed", n);
+  else if (step.status === "network_error") msg = t("tamper.offline");
+  else if (!bad.length) msg = t("tamper.same");
+  else msg = bad.length === 1 ? t("tamper.one", bad[0]) : t("tamper.many", bad[0], bad[bad.length - 1]);
   $("#t-live").textContent = msg;
   refresh(n);
 });
 $("#t-reset").addEventListener("click", () => {
   estado.edits = {};
-  $("#t-live").textContent = "De volta aos dados selados.";
+  $("#t-live").textContent = t("tamper.back");
   refresh(null);
 });
 
