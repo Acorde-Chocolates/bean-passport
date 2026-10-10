@@ -108,4 +108,5 @@ gh run list --limit 1
 - The team commits directly to `main` during the hackathon. Use a PR (`.agents/skills/git-pr`) when you want a review first.
 - Never force-push `main`.
 - Changes under `site/` deploy to GitHub Pages: wait for the run to finish and open the page once to confirm.
+- No push in the 15 minutes before recording a video or opening the site for the jury: pages stay cached for up to 10 minutes.
 - After the freeze (Mon Oct 12, 20:00 BRT) nothing is pushed.

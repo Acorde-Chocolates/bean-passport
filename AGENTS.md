@@ -19,6 +19,8 @@ This file is the single source of instructions for every coding agent on this re
 | Mon Oct 12, 22:00 | Fabrício (team lead) submits on colosseum.com |
 | Tue Oct 13, 03:59 | Official deadline (Oct 12, 23:59 PT) |
 
+**Quiet window:** no push in the 15 minutes before recording a video or opening the site for the jury. GitHub Pages keeps each page cached for up to 10 minutes, so a late deploy can show the previous version. After the last push, wait for the Pages run to finish and check the pages in a private window before recording.
+
 ## Language
 
 Everything in this repository is in **English**: code, identifiers, comments, commit messages, PRs, docs and data keys. The competition rules require all submitted content in English (section 12(a)(i)).
@@ -91,7 +93,7 @@ console.log(t===k.canonical&&c.createHash("sha256").update(t,"utf8").digest("hex
 
 - **No build step and no framework** before the submission. Plain HTML, CSS and JavaScript that runs from GitHub Pages as is.
 - **Pin every dependency** and vendor it under `site/vendor/` with the version in the file name.
-- **Cache busting:** every local CSS or JS reference in an HTML file ends with `?v=__V__`. The deploy replaces it with the commit SHA. Add it to any new reference.
+- **Cache busting:** every local CSS or JS reference in an HTML file ends with `?v=__V__`. The deploy replaces it with the short commit SHA, so a new deploy never mixes old and new files. Add it to any new reference. Vendored files carry the version in their file name instead.
 - **Batch files** are loaded with `?t=<timestamp>` and `cache: "no-store"`, so new anchors show up right after the deploy.
 - **New UI strings** go into `site/lote/i18n.js` or `site/js/home.js`, in both `en` and `pt`.
 - **Prefer clear names over comments.** Don't add new explanatory comments; existing ones must be in English.
