@@ -165,11 +165,19 @@ function lagText(s) {
 }
 
 function derived(r, current) {
+  if (r.step === "grinding") return parteDosNibs(r, current);
   if (!isNum(r.input_g) || !isNum(r.output_g)) return "";
   if (r.step === "roasting") return t("derived.roast", pct(r.input_g - r.output_g, r.input_g));
   if (r.step === "winnowing") { const green = current.steps[0].input_g; return isNum(green) ? t("derived.nibs", pct(r.output_g, green)) : ""; }
   if (r.step === "tempering_molding" && isNum(r.units) && Number(r.units) > 0) return t("derived.bars", r.units, Math.round(r.output_g / r.units));
   return "";
+}
+
+// Moagem que usou só parte dos nibs: o resto foi para outros produtos
+function parteDosNibs(r, current) {
+  const nibs = current.steps.find(s => s.step === "winnowing");
+  if (!nibs || !isNum(r.input_g) || !isNum(nibs.output_g) || Number(r.input_g) >= Number(nibs.output_g)) return "";
+  return t("derived.nibsShare", grams(r.input_g), grams(nibs.output_g));
 }
 
 function linkTransacao(seal) {
