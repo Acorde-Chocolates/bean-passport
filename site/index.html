@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bean Passport · Acorde Chocolates</title>
+  <meta name="description" content="Every chocolate batch from Acorde, sealed on Solana from bean to bar. Check a batch from the QR code on the wrapper.">
+  <meta name="theme-color" content="#F2A93B">
+  <link rel="icon" href="lote/img/favicon-100.webp" type="image/webp" sizes="32x32">
+  <link rel="icon" href="lote/img/favicon-300.webp" type="image/webp" sizes="192x192">
+  <link rel="apple-touch-icon" href="lote/img/favicon-300.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="home.css?v=__V__">
+</head>
+<body>
+  <header class="hero">
+    <svg class="swirl" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".55">
+      <path d="M-40 30 C 40 0, 110 70, 200 34 S 360 0, 440 40"/>
+      <path d="M-40 82 C 50 42, 130 122, 220 82 S 370 42, 440 98"/>
+      <path d="M-40 142 C 30 112, 120 182, 210 142 S 350 102, 440 152"/>
+      <path d="M-40 204 C 60 164, 140 244, 230 200 S 380 164, 440 218"/>
+      <path d="M262 -20 C 302 40, 252 90, 322 140 S 382 230, 362 290"/>
+    </svg>
+    <div class="hero-inner">
+      <div class="hero-top">
+        <a class="brand" href="./">
+          <img src="lote/img/favicon-300.webp" data-i18n-alt="brand.logoAlt" alt="Acorde Chocolates logo" width="48" height="48">
+          <div><b>Bean Passport</b><span data-i18n="brand.tagline">Acorde Chocolates · bean to bar</span></div>
+        </a>
+        <div class="lang" role="group" data-i18n-aria="lang.label" aria-label="Language">
+          <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="pt" lang="pt-BR" aria-pressed="false">PT</button>
+        </div>
+      </div>
+      <h1 data-i18n="hero.title">Every batch, sealed from bean to bar.</h1>
+      <p class="lead" data-i18n="hero.lead">Acorde Chocolates records each production step of a batch. Bean Passport seals a fingerprint of that record on Solana, so anyone can check it from the QR code on the wrapper, without trusting us.</p>
+      <form class="check" id="check" novalidate>
+        <label for="lot-id" data-i18n="check.label">Check a batch</label>
+        <div class="row">
+          <input id="lot-id" name="lot" autocomplete="off" spellcheck="false" autocapitalize="characters" data-i18n-placeholder="check.placeholder" placeholder="Batch code, e.g. TEST-0001">
+          <button type="submit" data-i18n="check.button">Open passport</button>
+        </div>
+        <p class="msg" id="check-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  </header>
+
+  <main>
+    <section aria-labelledby="h-demo">
+      <p class="eyebrow" data-i18n="demo.eyebrow">Live on Solana devnet</p>
+      <h2 id="h-demo" data-i18n="demo.title">See it working</h2>
+      <div class="demo" id="demo"></div>
+    </section>
+
+    <section aria-labelledby="h-how">
+      <p class="eyebrow" data-i18n="how.eyebrow">Three steps</p>
+      <h2 id="h-how" data-i18n="how.title">How it works</h2>
+      <ol class="steps">
+        <li><h3 data-i18n="how.1.title">Record</h3><p data-i18n-html="how.1.text">The factory's spreadsheet turns each closed production step into a canonical record: dates, weights in grams, origin. Nothing personal or financial.</p></li>
+        <li><h3 data-i18n="how.2.title">Seal</h3><p data-i18n-html="how.2.text">Acorde signs a Solana memo carrying the SHA-256 of that record. Each seal covers every earlier step, so a later edit breaks all the seals after it. <a href="anchor.html">For producers: seal a step →</a></p></li>
+        <li><h3 data-i18n="how.3.title">Verify</h3><p data-i18n-html="how.3.text">The batch passport recomputes the hash in your browser from the data it shows and compares it with the memo on Solana. You can also check it in a terminal.</p></li>
+      </ol>
+    </section>
+
+    <section class="limit" aria-label="What it proves">
+      <p data-i18n="limit">A seal proves the record hasn't changed since it was sealed, and when it was sealed. It doesn't prove the numbers are true: a wrong number typed before sealing stays wrong, and the seal attests it faithfully.</p>
+    </section>
+
+    <section aria-labelledby="h-open">
+      <h2 id="h-open" data-i18n="open.title">Open by design</h2>
+      <ul class="links">
+        <li><a href="https://github.com/Acorde-Chocolates/bean-passport" data-i18n="open.repo">Source code (MIT)</a></li>
+        <li><a href="https://github.com/Acorde-Chocolates/bean-passport/blob/main/site/spec/canonical-record-v1.md" data-i18n="open.spec">Canonical record spec v1</a></li>
+        <li><a href="https://github.com/Acorde-Chocolates/bean-passport/blob/main/site/spec/test-vector-v1.json" data-i18n="open.vector">Test vector</a></li>
+        <li><a href="anchor.html" data-i18n="open.anchor">Sealing page (for producers)</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer><p data-i18n="footer">Solana devnet · canonical record v1 · built for the Crypto World's Fair hackathon</p></footer>
+
+  <script src="js/home.js?v=__V__" defer></script>
+</body>
+</html>

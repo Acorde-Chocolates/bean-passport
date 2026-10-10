@@ -486,7 +486,7 @@ async function iniciar() {
 
   let resposta;
   try {
-    resposta = await fetch(`../data/lots/${id}.json`, { cache: "no-store" });
+    resposta = await fetch(`../data/lots/${id}.json?t=${Date.now()}`, { cache: "no-store" });
   } catch {
     mostrarAviso("err.offlineTitle", "err.offline", true);
     return;
