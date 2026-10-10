@@ -236,7 +236,7 @@ window.BP_I18N = (() => {
     try { localStorage.setItem(KEY, next); } catch {}
     const url = new URL(location.href);
     url.searchParams.set("lang", next);
-    history.replaceState(null, "", url);
+    try { history.replaceState(null, "", url); } catch {}
   }
 
   return { t, setLang, get lang() { return lang; }, LANGS };

@@ -128,7 +128,7 @@ function setLang(next) {
   try { localStorage.setItem(STORE, next); } catch {}
   const url = new URL(location.href);
   url.searchParams.set("lang", next);
-  history.replaceState(null, "", url);
+  try { history.replaceState(null, "", url); } catch {}
   apply();
 }
 
