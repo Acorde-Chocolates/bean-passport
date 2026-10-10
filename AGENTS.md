@@ -4,6 +4,13 @@ Batch passports for bean-to-bar chocolate. Each production step of a batch at Ac
 
 Built for the Crypto World's Fair hackathon (Colosseum), Solana track. Runs on Solana **devnet**.
 
+## For coding agents
+
+This file is the single source of instructions for every coding agent on this repo. Codex reads it directly; Claude Code reads it through `CLAUDE.md`, which imports it. Edit this file, never a copy.
+
+- Shared skills live in `.agents/skills/<name>/SKILL.md` (Agent Skills format): `git-commit` and `git-pr`.
+- `.claude/skills/<name>/SKILL.md` are thin pointers so Claude Code discovers the same skills. Change the rules in `.agents/skills/`, not in the pointers.
+
 ## Deadlines
 
 | When (BRT) | What |
@@ -22,6 +29,10 @@ The public pages are bilingual for users: **English by default**, Portuguese thr
 
 | Path | What it is |
 |---|---|
+| `AGENTS.md` | This guide, for every coding agent |
+| `CLAUDE.md` | Imports `AGENTS.md` for Claude Code |
+| `.agents/skills/` | Shared agent skills (`git-commit`, `git-pr`) |
+| `.claude/skills/` | Pointers to `.agents/skills/` for Claude Code |
 | `site/` | Everything published on GitHub Pages (`https://acorde-chocolates.github.io/bean-passport/`) |
 | `site/index.html`, `site/home.css`, `site/js/home.js` | Home page: check a batch, live demo, how it works |
 | `site/lote/` | Public batch passport (`lote/?id=<lot>`): `index.html`, `app.js`, `i18n.js`, `style.css` |
@@ -85,7 +96,7 @@ console.log(t===k.canonical&&c.createHash("sha256").update(t,"utf8").digest("hex
 - **New UI strings** go into `site/lote/i18n.js` or `site/js/home.js`, in both `en` and `pt`.
 - **Prefer clear names over comments.** Don't add new explanatory comments; existing ones must be in English.
 - **Escape everything** that comes from a batch file or the network before it reaches `innerHTML`.
-- **Commits and PRs** follow `.claude/skills/git-commit` and `.claude/skills/git-pr`: Conventional Commits in English, and no bot or AI attribution lines.
+- **Commits and PRs** follow `.agents/skills/git-commit` and `.agents/skills/git-pr`: Conventional Commits in English, and no bot or AI attribution lines.
 
 ## Team
 

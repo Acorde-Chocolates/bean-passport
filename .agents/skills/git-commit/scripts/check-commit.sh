@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCOPES='site|anchor|home|i18n|config|spec|data|apps-script|design|deps|ci|docs|claude'
+SCOPES='site|anchor|home|i18n|config|spec|data|apps-script|design|deps|ci|docs|agents'
 TYPES='feat|fix|docs|style|refactor|perf|test|build|ci|chore'
 
 usage() {
