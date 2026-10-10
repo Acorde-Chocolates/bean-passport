@@ -1,0 +1,21 @@
+{
+  "schema": "bean-passport.lot.v1",
+  "record": {
+    "lot": "ACD-0142",
+    "product": "Bean-to-bar 60 g",
+    "producer": "DR-01",
+    "municipality": "Ibirapitanga",
+    "state": "BA",
+    "origin_lot": "CC-2607",
+    "purchase_date": "2026-07-18",
+    "steps": [
+      { "n": "1", "step": "roasting", "date": "2026-10-05", "input_g": "6300", "output_g": "6080", "byproduct_g": "", "units": "", "profile": "" },
+      { "n": "2", "step": "winnowing", "date": "2026-10-07", "input_g": "6080", "output_g": "4302", "byproduct_g": "1602", "units": "", "profile": "" },
+      { "n": "3", "step": "grinding", "date": "2026-10-10", "input_g": "4302", "output_g": "6140", "byproduct_g": "", "units": "", "profile": "" },
+      { "n": "4", "step": "tempering_molding", "date": "2026-10-11", "input_g": "6140", "output_g": "6000", "byproduct_g": "", "units": "100", "profile": "" },
+      { "n": "5", "step": "packaging", "date": "2026-10-12", "input_g": "6000", "output_g": "6000", "byproduct_g": "", "units": "100", "profile": "" }
+    ]
+  },
+  "anchors": [],
+  "exported_at": "2026-10-09T23:30:00-03:00"
+}
