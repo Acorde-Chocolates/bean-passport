@@ -19,6 +19,7 @@ A sealed record proves that the data has not changed since it was sealed, and wh
 | `site/spec/canonical-record-v1.md` | The canonical record format, the contract between the generator and the verifier |
 | `site/spec/test-vector-v1.json` | Test vector both implementations must reproduce |
 | `site/data/lots/` | Public batch files read by the verification page |
+| `design/mockups/` | Clickable mockups of the public page (not published on Pages) |
 
 ## License
 
