@@ -97,8 +97,8 @@ details summary { cursor: pointer; font-weight: 600; }
     <p class="hint">Paste the memo and the canonical record from the BP_Anchors sheet. The page recomputes the hash from the record and only lets you seal when both match.</p>
     <label for="memo">Memo<input id="memo" autocomplete="off" spellcheck="false" placeholder="v1|LOT-ID|1|64 hex characters"></label>
     <label for="canonical">Canonical record<textarea id="canonical" spellcheck="false" placeholder='["v1","LOT-ID",...]'></textarea></label>
-    <div class="row">
-      <button class="btn ghost" type="button" id="fill-test">Fill with TEST-0001 (practice)</button>
+    <div class="row" id="practice" hidden>
+      <span class="hint">Practice with the test vector:</span>
     </div>
     <p class="msg" id="check-msg" hidden></p>
     <div id="review" hidden>
@@ -110,6 +110,7 @@ details summary { cursor: pointer; font-weight: 600; }
 
   <section class="card" aria-labelledby="s-title">
     <h2 id="s-title"><span>3</span>Seal</h2>
+    <p class="msg" data-kind="warn" id="devnet-hint">Before approving, the Phantom window must show <strong>Solana Devnet</strong>. If it shows just "Solana", "not enough SOL" or "couldn't simulate", click Cancel and switch Phantom to Devnet in Settings › Developer Settings › Testnet Mode.</p>
     <div class="row">
       <button class="btn" type="button" id="seal" disabled>Seal on devnet</button>
     </div>

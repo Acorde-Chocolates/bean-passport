@@ -9,7 +9,6 @@ const LOW_BALANCE = 50000;
 const conn = new Connection(CFG.rpcUrl, "confirmed");
 const state = { wallet: null, memo: null, record: null, ready: false, sending: false };
 let checkId = 0;
-let testIndex = 0;
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -240,7 +239,7 @@ async function seal() {
       show("status", `This wallet already sealed step ${memo.step} of ${memo.lot} with a different hash (${earlier.conflict.slice(0, 8)}…). Check the record before sealing again.`, "warn");
       return;
     }
-    show("status", "Approve the transaction in Phantom…");
+    show("status", "Approve the transaction in Phantom. Check that it shows Solana Devnet first.");
     const ix = new TransactionInstruction({
       programId: MEMO_PROGRAM,
       keys: [{ pubkey: state.wallet, isSigner: true, isWritable: false }],
@@ -267,19 +266,27 @@ async function seal() {
   }
 }
 
-async function fillTest() {
+async function loadPractice() {
   try {
     const res = await fetch("spec/test-vector-v1.json", { cache: "no-store" });
     const vector = await res.json();
-    const c = vector.cases[testIndex % 2];
-    testIndex++;
-    $("memo").value = c.memo;
-    $("canonical").value = c.canonical;
-    $("reviewed").checked = false;
-    $("fill-test").textContent = `Fill with TEST-0001 step ${(testIndex % 2) + 1} (practice)`;
-    await checkInputs();
+    const row = $("practice");
+    for (const c of vector.cases) {
+      const button = document.createElement("button");
+      button.className = "btn ghost";
+      button.type = "button";
+      button.textContent = `${c.record.lot} step ${c.upTo}`;
+      button.addEventListener("click", () => {
+        $("memo").value = c.memo;
+        $("canonical").value = c.canonical;
+        $("reviewed").checked = false;
+        checkInputs();
+      });
+      row.appendChild(button);
+    }
+    row.hidden = false;
   } catch (e) {
-    show("check-msg", `Couldn't load the test vector: ${e.message || e}`, "bad");
+    log(`Practice cases unavailable: ${e.message || e}`);
   }
 }
 
@@ -303,7 +310,7 @@ $("reviewed").addEventListener("change", updateSealButton);
 $("allow-conflict").addEventListener("change", updateSealButton);
 $("connect").addEventListener("click", connect);
 $("seal").addEventListener("click", seal);
-$("fill-test").addEventListener("click", fillTest);
+loadPractice();
 $("copy-signature").addEventListener("click", e => copy($("result-signature").textContent, e.currentTarget, $("result-signature")));
 $("copy-snippet").addEventListener("click", e => copy($("result-snippet").textContent, e.currentTarget, $("result-snippet")));
 
