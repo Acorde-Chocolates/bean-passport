@@ -19,8 +19,8 @@ const CHECK_ICON = '<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><pat
 // Mesmo formato de lote aceito no memo (spec v1)
 const FORMATO_LOTE = /^[A-Za-z0-9-]{1,32}$/;
 
-// Carteira da Acorde que assina os selos. Preencher quando a carteira da empresa existir.
-const CARTEIRA_ACORDE = "";
+const CFG = window.BP_CONFIG || {};
+const FORMATO_ASSINATURA = /^[1-9A-HJ-NP-Za-km-z]{64,90}$/;
 
 // Cenários de simulação (?simular=...). Os selos são calculados a partir do próprio arquivo do lote.
 const CENARIOS = {
@@ -32,7 +32,7 @@ const CENARIOS = {
   "erro-rede": { semRede: true },
 };
 
-const estado = { original: null, ancoras: [], selos: {}, edits: {}, cenario: null, carteira: CARTEIRA_ACORDE };
+const estado = { original: null, ancoras: [], selos: {}, edits: {}, cenario: null, carteira: "" };
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
 let runId = 0;
@@ -75,11 +75,41 @@ function fakeB58(seed, len) {
   return out;
 }
 
-// Busca o selo (memo) de uma etapa na Solana devnet a partir da âncora do arquivo ({ step, signature }).
-// A leitura da rede é a parte do Emerson e entra aqui: devolver { memo, signer, signature, sealedAt }
-// ou null se a transação não existir. Enquanto não está ligada, qualquer âncora real aparece como "Sem conexão".
+async function rpc(metodo, parametros) {
+  for (let tentativa = 0; tentativa < 4; tentativa++) {
+    const resposta = await fetch(CFG.rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: metodo, params: parametros })
+    });
+    if (resposta.status === 429) { await new Promise(r => setTimeout(r, 1000 * 2 ** tentativa)); continue; }
+    if (!resposta.ok) throw new Error(`RPC respondeu ${resposta.status}`);
+    const json = await resposta.json();
+    if (json.error) throw new Error(json.error.message);
+    return json.result;
+  }
+  throw new Error("RPC ocupada");
+}
+
+function horaBRT(blockTime) {
+  const partes = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+  }).formatToParts(new Date(blockTime * 1000)).map(p => [p.type, p.value]));
+  return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
+}
+
 async function buscarSelo(ancora) {
-  throw new Error(`leitura da rede ainda não ligada (etapa ${ancora.step})`);
+  if (!ancora || !FORMATO_ASSINATURA.test(ancora.signature || "")) return null;
+  const transacao = await rpc("getTransaction", [ancora.signature, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]);
+  if (!transacao || transacao.meta?.err || !transacao.blockTime) return null;
+  const instrucao = transacao.transaction.message.instructions.find(i => i.programId === CFG.memoProgram && typeof i.parsed === "string");
+  if (!instrucao) return null;
+  return {
+    memo: instrucao.parsed,
+    signer: transacao.transaction.message.accountKeys[0].pubkey,
+    signature: ancora.signature,
+    sealedAt: horaBRT(transacao.blockTime)
+  };
 }
 
 async function obterSelo(n) {
@@ -435,6 +465,7 @@ async function iniciar() {
     } else {
       estado.original = record;
       estado.ancoras = lote.anchors || [];
+      estado.carteira = CFG.issuerFor ? CFG.issuerFor(record.lot) : (CFG.issuer || "");
     }
     preencherTopo(estado.original);
   } catch {

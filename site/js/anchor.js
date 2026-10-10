@@ -67,6 +67,15 @@ function renderReview(record) {
   $("review").hidden = false;
 }
 
+function updatePublicLink() {
+  const lot = (state.memo && state.memo.lot) || (state.record && !state.record.error && state.record.header[0]) || "";
+  const link = $("public-link-top");
+  if (!lot) { link.hidden = true; return; }
+  link.href = CFG.publicPage(lot);
+  link.textContent = `Public passport for ${lot} ↗`;
+  link.hidden = false;
+}
+
 function updateSealButton() {
   $("seal").disabled = !(state.wallet && state.ready && $("reviewed").checked && !state.sending);
 }
@@ -97,6 +106,7 @@ async function checkInputs() {
     else { msg = `Memo and record match: lot ${lot}, step ${lastStep}, hash ${hash.slice(0, 12)}…`; kind = "ok"; state.ready = true; }
   }
   if (my !== checkId) return;
+  updatePublicLink();
   show("check-msg", msg, kind);
   $("conflict-box").hidden = true;
   $("allow-conflict").checked = false;
@@ -129,7 +139,8 @@ function setWallet(publicKey) {
   $("wallet-info").hidden = false;
   $("connect").textContent = "Reconnect";
   log(`Connected: ${address}`);
-  if (!CFG.issuer) show("issuer-msg", "Acorde's wallet is not set in js/config.js yet. Seals only verify on the public page after it is set to the address that signs them.", "warn");
+  if (CFG.testIssuer === address) show("issuer-msg", "This is the team's test wallet. Its seals verify on the public page for TEST-* lots only.", "ok");
+  else if (!CFG.issuer) show("issuer-msg", "Acorde's wallet is not set in js/config.js yet. Seals only verify on the public page after it is set to the address that signs them.", "warn");
   else if (CFG.issuer === address) show("issuer-msg", "This is Acorde's wallet. Seals from it verify on the public page.", "ok");
   else show("issuer-msg", "This is not Acorde's wallet. Use it to practice: on the public page its seals show as \"Other wallet\".", "warn");
   updateSealButton();
@@ -203,6 +214,7 @@ function friendlyError(e) {
 function showResult(signature, memo) {
   $("result-signature").textContent = signature;
   $("result-explorer").href = CFG.explorerTx(signature);
+  $("result-public").href = CFG.publicPage(memo.lot);
   $("result-snippet").textContent = JSON.stringify({ step: String(memo.step), signature });
   $("result").hidden = false;
 }

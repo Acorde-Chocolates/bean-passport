@@ -31,6 +31,11 @@
       }
     ]
   },
-  "anchors": [],
-  "exported_at": "2026-10-09T22:00:00-03:00"
+  "anchors": [
+    {
+      "step": "1",
+      "signature": "4hmn6cN4yHPKqBXqKZAPoZDyCvMt9rwRt943XUCdQnZwmB5zDiVAgiSMQ2Dv2hUFnfVHngstyuyAxKFVLiZW9v4W"
+    }
+  ],
+  "exported_at": "2026-10-10T01:05:00-03:00"
 }
