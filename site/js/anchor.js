@@ -1,5 +1,7 @@
 const { Connection, PublicKey, Transaction, TransactionInstruction } = window.solanaWeb3;
 const CFG = window.BP_CONFIG;
+const I18N = window.BP_ANCHOR_I18N;
+const { t } = I18N;
 const MEMO_PROGRAM = new PublicKey(CFG.memoProgram);
 const MEMO_RE = /^v1\|([A-Za-z0-9-]{1,32})\|([1-5])\|([0-9a-f]{64})$/;
 const HEADER = ["lot", "product", "producer", "municipality", "state", "origin_lot", "purchase_date"];
@@ -11,13 +13,15 @@ const MAX_G = 50000;
 const LOW_BALANCE = 50000;
 
 const conn = new Connection(CFG.rpcUrl, "confirmed");
-const state = { wallet: null, memo: null, record: null, ready: false, sending: false };
+const state = { wallet: null, lamports: null, balanceError: false, memo: null, record: null, validation: null, check: null, ready: false, sending: false, msgs: {} };
 let checkId = 0;
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const stripMemoPrefix = m => (m || "").replace(/^\[\d+\]\s*/, "");
+const resolve = args => args.map(a => typeof a === "function" ? a() : a);
+const tr = ([key, ...args]) => t(key, ...resolve(args));
 
 function log(text) {
   $("log").textContent += `[${new Date().toLocaleTimeString("en-GB")}] ${text}\n`;
@@ -28,6 +32,17 @@ function show(id, text, kind) {
   el.textContent = text;
   el.dataset.kind = kind || "";
   el.hidden = !text;
+}
+
+function say(id, kind, key, ...args) {
+  state.msgs[id] = key ? { kind, key, args } : null;
+  show(id, key ? t(key, ...resolve(args)) : "", kind);
+}
+
+function i18nError(key, ...args) {
+  const e = new Error(t(key, ...resolve(args)));
+  e.i18n = [key, ...args];
+  return e;
 }
 
 function provider() {
@@ -50,77 +65,82 @@ function parseCanonical(raw) {
   const text = raw.trim();
   if (!text) return null;
   let arr;
-  try { arr = JSON.parse(text); } catch { return { error: "The canonical record is not valid JSON." }; }
-  if (!Array.isArray(arr) || arr[0] !== "v1" || arr.length < 9) return { error: "This is not a v1 canonical record." };
+  try { arr = JSON.parse(text); } catch { return { error: "parse.json" }; }
+  if (!Array.isArray(arr) || arr[0] !== "v1" || arr.length < 9) return { error: "parse.notV1" };
   const header = arr.slice(1, 8);
   const steps = arr.slice(8);
   if (header.some(v => typeof v !== "string") || steps.some(s => !Array.isArray(s) || s.length !== 8 || s.some(v => typeof v !== "string"))) {
-    return { error: "Every value must be a string, and every step must have 8 values." };
+    return { error: "parse.types" };
   }
-  if (steps.some((s, i) => s[0] !== String(i + 1))) return { error: "Steps must be numbered 1, 2, 3 and so on, in order." };
-  if (JSON.stringify(arr) !== text) return { error: "The record is not in canonical form (extra spaces or line breaks). Paste it exactly as exported." };
+  if (steps.some((s, i) => s[0] !== String(i + 1))) return { error: "parse.numbering" };
+  if (JSON.stringify(arr) !== text) return { error: "parse.canonical" };
   return { text, header, steps };
 }
 
 const isDigits = v => /^\d*$/.test(v);
-const kg = v => `${(Number(v) / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })} kg`;
+const num = v => Number(v).toLocaleString(t("locale"));
+const kg = v => `${(Number(v) / 1000).toLocaleString(t("locale"), { maximumFractionDigits: 3 })} kg`;
 const todayBRT = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
 function validDate(d) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
-  const t = new Date(d + "T12:00:00Z");
-  return !isNaN(t) && t.toISOString().slice(0, 10) === d;
+  const x = new Date(d + "T12:00:00Z");
+  return !isNaN(x) && x.toISOString().slice(0, 10) === d;
 }
 
 function validateRecord(record) {
   const errors = [];
   const warnings = [];
   const today = todayBRT();
-  const [lot, product, producer, , state, , purchaseDate] = record.header;
-  const values = [...record.header.map((v, i) => [HEADER[i], v]), ...record.steps.flatMap((s, i) => s.map((v, j) => [`step ${i + 1} ${STEP[j]}`, v]))];
+  const [lot, product, producer, , uf, , purchaseDate] = record.header;
+  const values = [
+    ...record.header.map((v, i) => [HEADER[i], v]),
+    ...record.steps.flatMap((s, i) => s.map((v, j) => [() => t("label.step", i + 1, STEP[j]), v]))
+  ];
   for (const [label, v] of values) {
-    if (v !== v.trim()) errors.push(`${label} has spaces at the start or end.`);
-    if (v !== v.normalize("NFC")) errors.push(`${label} is not in NFC form. Export it again from the spreadsheet.`);
+    if (v !== v.trim()) errors.push(["v.spaces", label]);
+    if (v !== v.normalize("NFC")) errors.push(["v.nfc", label]);
   }
-  if (!/^[A-Za-z0-9-]{1,32}$/.test(lot)) errors.push(`lot "${lot}" must use only letters, digits and hyphens (up to 32).`);
-  if (!product) errors.push("product is empty.");
-  if (!producer) warnings.push("producer is empty. Use the producer code (for example FOR004).");
-  if (state && !/^[A-Z]{2}$/.test(state)) warnings.push(`state "${state}" is not a two-letter code (for example BA).`);
-  if (purchaseDate && !validDate(purchaseDate)) errors.push(`purchase_date "${purchaseDate}" is not a real date in yyyy-MM-dd.`);
-  if (purchaseDate && validDate(purchaseDate) && purchaseDate > today) errors.push(`purchase_date ${purchaseDate} is in the future.`);
-  if (record.steps.length > STEP_CODES.length) errors.push(`The record has ${record.steps.length} steps. The format allows at most ${STEP_CODES.length}.`);
+  if (!/^[A-Za-z0-9-]{1,32}$/.test(lot)) errors.push(["v.lot", lot]);
+  if (!product) errors.push(["v.product"]);
+  if (!producer) warnings.push(["v.producer"]);
+  if (uf && !/^[A-Z]{2}$/.test(uf)) warnings.push(["v.state", uf]);
+  if (purchaseDate && !validDate(purchaseDate)) errors.push(["v.purchaseInvalid", purchaseDate]);
+  if (purchaseDate && validDate(purchaseDate) && purchaseDate > today) errors.push(["v.purchaseFuture", purchaseDate]);
+  if (record.steps.length > STEP_CODES.length) errors.push(["v.tooMany", record.steps.length, STEP_CODES.length]);
   let previousDate = purchaseDate && validDate(purchaseDate) ? purchaseDate : "";
   record.steps.forEach((s, i) => {
     const n = i + 1;
     const [, code, date, input, output, byproduct, units] = s;
     const expected = STEP_CODES[i];
-    if (expected && code !== expected) errors.push(`Step ${n}: code is "${code}", expected "${expected}". Conching belongs to grinding.`);
-    if (!date) errors.push(`Step ${n}: date is empty.`);
-    else if (!validDate(date)) errors.push(`Step ${n}: date "${date}" is not a real date in yyyy-MM-dd.`);
+    if (expected && code !== expected) errors.push(["v.code", n, code, expected]);
+    if (!date) errors.push(["v.dateEmpty", n]);
+    else if (!validDate(date)) errors.push(["v.dateInvalid", n, date]);
     else {
-      if (date > today) errors.push(`Step ${n}: date ${date} is in the future.`);
-      if (previousDate && date < previousDate) warnings.push(`Step ${n}: date ${date} is earlier than the previous date (${previousDate}).`);
+      if (date > today) errors.push(["v.dateFuture", n, date]);
+      if (previousDate && date < previousDate) warnings.push(["v.dateOrder", n, date, previousDate]);
       previousDate = date;
     }
     for (const j of WEIGHT_FIELDS) {
       const v = s[j];
-      if (!isDigits(v)) errors.push(`Step ${n}: ${STEP[j]} "${v}" must be whole grams, digits only.`);
-      else if (v !== "" && (Number(v) < MIN_G || Number(v) > MAX_G)) warnings.push(`Step ${n}: ${STEP[j]} is ${Number(v).toLocaleString("en-US")} g (${kg(v)}). Check it is in grams, not kilograms.`);
+      if (!isDigits(v)) errors.push(["v.weightDigits", n, STEP[j], v]);
+      else if (v !== "" && (Number(v) < MIN_G || Number(v) > MAX_G)) warnings.push(["v.weightRange", n, STEP[j], () => num(v), () => kg(v)]);
     }
-    if (!isDigits(units)) errors.push(`Step ${n}: units "${units}" must be a whole number.`);
-    if (input === "") warnings.push(`Step ${n}: input_g is empty.`);
+    if (!isDigits(units)) errors.push(["v.units", n, units]);
+    if (input === "") warnings.push(["v.inputEmpty", n]);
     if (isDigits(input) && isDigits(output) && input !== "" && output !== "" && Number(output) > Number(input) && code !== "grinding") {
-      warnings.push(`Step ${n}: output (${Number(output).toLocaleString("en-US")} g) is larger than input (${Number(input).toLocaleString("en-US")} g).`);
+      warnings.push(["v.outputLarger", n, () => num(output), () => num(input)]);
     }
-    if (byproduct !== "" && code !== "winnowing") warnings.push(`Step ${n}: byproduct_g is filled, but only winnowing has a byproduct (husk).`);
+    if (byproduct !== "" && code !== "winnowing") warnings.push(["v.byproduct", n]);
   });
   return { errors, warnings };
 }
 
-function renderIssues(result) {
+function renderIssues() {
   const list = $("issues");
+  const result = state.validation;
   if (!result || (!result.errors.length && !result.warnings.length)) { list.hidden = true; list.innerHTML = ""; return; }
-  list.innerHTML = result.errors.map(e => `<li class="err">${esc(e)}</li>`).join("") + result.warnings.map(w => `<li class="warn">${esc(w)}</li>`).join("");
+  list.innerHTML = result.errors.map(e => `<li class="err">${esc(tr(e))}</li>`).join("") + result.warnings.map(w => `<li class="warn">${esc(tr(w))}</li>`).join("");
   list.hidden = false;
 }
 
@@ -130,7 +150,8 @@ function cell(v, j) {
   return esc(v);
 }
 
-function renderReview(record) {
+function renderReview() {
+  const record = state.record;
   if (!record || record.error) { $("review").hidden = true; return; }
   $("review-header").innerHTML = HEADER.map((k, i) => `<dt>${k}</dt><dd>${esc(record.header[i] || "—")}</dd>`).join("");
   $("review-steps").innerHTML = `<thead><tr>${STEP.map(k => `<th>${k}</th>`).join("")}</tr></thead><tbody>` +
@@ -138,12 +159,17 @@ function renderReview(record) {
   $("review").hidden = false;
 }
 
+function renderCheck() {
+  const c = state.check;
+  show("check-msg", c ? tr(c.msg) : "", c ? c.kind : "");
+}
+
 function updatePublicLink() {
   const lot = (state.memo && state.memo.lot) || (state.record && !state.record.error && state.record.header[0]) || "";
   const link = $("public-link-top");
   if (!lot) { link.hidden = true; return; }
   link.href = CFG.publicPage(lot);
-  link.textContent = `Public passport for ${lot} ↗`;
+  link.textContent = t("publicLink", lot);
   link.hidden = false;
 }
 
@@ -158,66 +184,80 @@ async function checkInputs() {
   const canonRaw = $("canonical").value.trim();
   state.memo = memoRaw ? parseMemo(memoRaw) : null;
   state.record = parseCanonical(canonRaw);
-  renderReview(state.record);
-  const validation = state.record && !state.record.error ? validateRecord(state.record) : null;
-  renderIssues(validation);
-  let msg = "";
-  let kind = "";
-  if (!memoRaw && !canonRaw) msg = "";
-  else if (memoRaw && !state.memo) { msg = "The memo must look like v1|LOT-ID|STEP|HASH: lot with letters, digits and hyphens, step 1 to 5, hash with 64 lowercase hex characters."; kind = "bad"; }
-  else if (!state.record) { msg = "Paste the canonical record too. The page needs it to recompute the hash."; kind = "warn"; }
-  else if (state.record.error) { msg = state.record.error; kind = "bad"; }
-  else if (!state.memo) { msg = "Paste the memo too."; kind = "warn"; }
+  renderReview();
+  state.validation = state.record && !state.record.error ? validateRecord(state.record) : null;
+  renderIssues();
+  let check = null;
+  if (!memoRaw && !canonRaw) check = null;
+  else if (memoRaw && !state.memo) check = { msg: ["check.memoFormat"], kind: "bad" };
+  else if (!state.record) check = { msg: ["check.needCanonical"], kind: "warn" };
+  else if (state.record.error) check = { msg: [state.record.error], kind: "bad" };
+  else if (!state.memo) check = { msg: ["check.needMemo"], kind: "warn" };
   else {
     const hash = await sha256Hex(state.record.text);
     if (my !== checkId) return;
     const lot = state.record.header[0];
     const lastStep = state.record.steps.length;
-    if (state.memo.lot !== lot) { msg = `The memo is for lot ${state.memo.lot}, but the record is for lot ${lot}.`; kind = "bad"; }
-    else if (state.memo.step !== lastStep) { msg = `The memo is for step ${state.memo.step}, but the record goes up to step ${lastStep}.`; kind = "bad"; }
-    else if (state.memo.hash !== hash) { msg = `The hash in the memo doesn't match the record. Recomputed here: ${hash}`; kind = "bad"; }
-    else if (validation.errors.length) { msg = `Memo and record match, but the record has ${validation.errors.length === 1 ? "1 problem" : `${validation.errors.length} problems`} listed below. Fix them in the spreadsheet and export again: a seal can't be undone.`; kind = "bad"; }
-    else if (validation.warnings.length) { msg = `Memo and record match: lot ${lot}, step ${lastStep}, hash ${hash.slice(0, 12)}…. Check the warnings below before sealing.`; kind = "warn"; state.ready = true; }
-    else { msg = `Memo and record match: lot ${lot}, step ${lastStep}, hash ${hash.slice(0, 12)}…`; kind = "ok"; state.ready = true; }
+    const v = state.validation;
+    if (state.memo.lot !== lot) check = { msg: ["check.lotMismatch", state.memo.lot, lot], kind: "bad" };
+    else if (state.memo.step !== lastStep) check = { msg: ["check.stepMismatch", state.memo.step, lastStep], kind: "bad" };
+    else if (state.memo.hash !== hash) check = { msg: ["check.hashMismatch", hash], kind: "bad" };
+    else if (v.errors.length) check = { msg: ["check.problems", v.errors.length], kind: "bad" };
+    else if (v.warnings.length) { check = { msg: ["check.warnings", lot, lastStep, hash.slice(0, 12)], kind: "warn" }; state.ready = true; }
+    else { check = { msg: ["check.ok", lot, lastStep, hash.slice(0, 12)], kind: "ok" }; state.ready = true; }
   }
   if (my !== checkId) return;
+  state.check = check;
   updatePublicLink();
-  show("check-msg", msg, kind);
+  renderCheck();
   $("conflict-box").hidden = true;
   $("allow-conflict").checked = false;
   updateSealButton();
 }
 
+function renderBalance() {
+  if (!state.wallet) return;
+  if (state.balanceError) { $("wallet-balance").textContent = t("balance.err"); return; }
+  if (state.lamports === null) { $("wallet-balance").textContent = ""; return; }
+  const sol = (state.lamports / 1e9).toLocaleString(t("locale"), { maximumFractionDigits: 4 });
+  $("wallet-balance").textContent = t(state.lamports < LOW_BALANCE ? "balance.low" : "balance.ok", sol);
+}
+
 async function refreshBalance() {
   if (!state.wallet) return;
   try {
-    const lamports = await conn.getBalance(state.wallet, "confirmed");
-    const sol = (lamports / 1e9).toLocaleString("en-US", { maximumFractionDigits: 4 });
-    $("wallet-balance").textContent = lamports < LOW_BALANCE ? `${sol} SOL (devnet). Too low to pay the fee: get devnet SOL first.` : `${sol} SOL (devnet)`;
+    state.lamports = await conn.getBalance(state.wallet, "confirmed");
+    state.balanceError = false;
   } catch (e) {
-    $("wallet-balance").textContent = "Couldn't read the balance.";
+    state.balanceError = true;
     log(`Balance error: ${e.message || e}`);
   }
+  renderBalance();
+}
+
+function renderConnect() {
+  $("connect").textContent = t(state.wallet ? "reconnect" : "connect");
 }
 
 function setWallet(publicKey) {
   state.wallet = publicKey;
+  state.lamports = null;
+  state.balanceError = false;
+  renderConnect();
   if (!publicKey) {
     $("wallet-info").hidden = true;
-    $("connect").textContent = "Connect Phantom";
-    show("issuer-msg", "Wallet disconnected.", "warn");
+    say("issuer-msg", "warn", "wallet.disconnected");
     updateSealButton();
     return;
   }
   const address = publicKey.toBase58();
   $("wallet-address").innerHTML = `<a href="${CFG.explorerAddress(address)}" target="_blank" rel="noopener">${esc(address)}</a>`;
   $("wallet-info").hidden = false;
-  $("connect").textContent = "Reconnect";
   log(`Connected: ${address}`);
-  if (CFG.testIssuer === address) show("issuer-msg", "This is the team's test wallet. Its seals verify on the public page for TEST-* lots only.", "ok");
-  else if (!CFG.issuer) show("issuer-msg", "Acorde's wallet is not set in js/config.js yet. Seals only verify on the public page after it is set to the address that signs them.", "warn");
-  else if (CFG.issuer === address) show("issuer-msg", "This is Acorde's wallet. Seals from it verify on the public page.", "ok");
-  else show("issuer-msg", "This is not Acorde's wallet. Use it to practice: on the public page its seals show as \"Other wallet\".", "warn");
+  if (CFG.testIssuer === address) say("issuer-msg", "ok", "issuer.test");
+  else if (!CFG.issuer) say("issuer-msg", "warn", "issuer.unset");
+  else if (CFG.issuer === address) say("issuer-msg", "ok", "issuer.acorde");
+  else say("issuer-msg", "warn", "issuer.other");
   updateSealButton();
   refreshBalance();
 }
@@ -225,7 +265,7 @@ function setWallet(publicKey) {
 async function connect() {
   const p = provider();
   if (!p) {
-    show("issuer-msg", "Phantom not found. Use a desktop browser with the Phantom extension, or open this page inside the Phantom app.", "warn");
+    say("issuer-msg", "warn", "phantom.missing");
     const link = $("open-in-phantom");
     link.href = `https://phantom.com/ul/browse/${encodeURIComponent(location.href)}?ref=${encodeURIComponent(location.origin)}`;
     link.hidden = false;
@@ -235,7 +275,8 @@ async function connect() {
     const { publicKey } = await p.connect();
     setWallet(publicKey);
   } catch (e) {
-    show("issuer-msg", e && e.code === 4001 ? "Connection cancelled in Phantom." : `Couldn't connect: ${(e && e.message) || e}`, "bad");
+    if (e && e.code === 4001) say("issuer-msg", "bad", "connect.cancelled");
+    else say("issuer-msg", "bad", "connect.failed", (e && e.message) || String(e));
   }
 }
 
@@ -258,11 +299,9 @@ async function waitConfirmation(signature, lastValidBlockHeight) {
   for (;;) {
     const { value } = await conn.getSignatureStatuses([signature]);
     const s = value[0];
-    if (s && s.err) throw new Error(`The transaction failed on devnet: ${JSON.stringify(s.err)}`);
+    if (s && s.err) throw i18nError("err.failed", JSON.stringify(s.err));
     if (s && (s.confirmationStatus === "confirmed" || s.confirmationStatus === "finalized")) return;
-    if (await conn.getBlockHeight("confirmed") > lastValidBlockHeight) {
-      throw new Error("The transaction never showed up on devnet. Check that Phantom is set to Solana Devnet (Settings › Developer Settings › Testnet Mode) and try again.");
-    }
+    if (await conn.getBlockHeight("confirmed") > lastValidBlockHeight) throw i18nError("err.neverShowed");
     await sleep(2000);
   }
 }
@@ -280,10 +319,11 @@ async function readMemo(signature) {
 }
 
 function friendlyError(e) {
-  if (e && e.code === 4001) return "Cancelled in Phantom. Nothing was sent.";
+  if (e && e.code === 4001) return ["err.cancelled"];
+  if (e && e.i18n) return e.i18n;
   const message = (e && e.message) || String(e);
-  if (/insufficient|debit|0x1$/i.test(message)) return "Not enough devnet SOL to pay the fee.";
-  return message;
+  if (/insufficient|debit|0x1$/i.test(message)) return ["err.noSol"];
+  return ["raw", message];
 }
 
 function showResult(signature, memo) {
@@ -302,20 +342,20 @@ async function seal() {
   updateSealButton();
   $("result").hidden = true;
   try {
-    show("status", "Checking earlier seals from this wallet…");
+    say("status", "", "st.checking");
     const earlier = await findEarlier(memo);
     if (earlier.same) {
       log(`Already sealed: ${earlier.same}`);
       showResult(earlier.same, memo);
-      show("status", "This exact memo was already sealed by this wallet. Nothing new was sent.", "ok");
+      say("status", "ok", "st.already");
       return;
     }
     if (earlier.conflict && !$("allow-conflict").checked) {
       $("conflict-box").hidden = false;
-      show("status", `This wallet already sealed step ${memo.step} of ${memo.lot} with a different hash (${earlier.conflict.slice(0, 8)}…). Check the record before sealing again.`, "warn");
+      say("status", "warn", "st.conflict", memo.step, memo.lot, earlier.conflict.slice(0, 8));
       return;
     }
-    show("status", "Approve the transaction in Phantom. Check that it shows Solana Devnet first.");
+    say("status", "", "st.approve");
     const ix = new TransactionInstruction({
       programId: MEMO_PROGRAM,
       keys: [{ pubkey: state.wallet, isSigner: true, isWritable: false }],
@@ -325,21 +365,26 @@ async function seal() {
     const tx = new Transaction({ feePayer: state.wallet, blockhash, lastValidBlockHeight }).add(ix);
     const { signature } = await p.signAndSendTransaction(tx);
     log(`Sent: ${signature}`);
-    show("status", "Sent. Waiting for devnet to confirm…");
+    say("status", "", "st.sent");
     await waitConfirmation(signature, lastValidBlockHeight);
-    show("status", "Confirmed. Reading the memo back from devnet…");
+    say("status", "", "st.confirmed");
     const chainMemo = await readMemo(signature);
     showResult(signature, memo);
-    if (chainMemo === memo.text) show("status", "Sealed. The memo read back from devnet matches.", "ok");
-    else show("status", `Sealed, but the memo read back doesn't match yet (${chainMemo || "not found"}). Check it on the explorer.`, "warn");
+    if (chainMemo === memo.text) say("status", "ok", "st.sealed");
+    else say("status", "warn", "st.mismatch", chainMemo ? chainMemo : () => t("notFound"));
     refreshBalance();
   } catch (e) {
     log(`Error: ${(e && (e.message || JSON.stringify(e))) || e}`);
-    show("status", friendlyError(e), "bad");
+    const [key, ...args] = friendlyError(e);
+    say("status", "bad", key, ...args);
   } finally {
     state.sending = false;
     updateSealButton();
   }
+}
+
+function labelPractice() {
+  document.querySelectorAll("#practice button").forEach(b => { b.textContent = t("practice.button", b.dataset.lot, b.dataset.step); });
 }
 
 async function loadPractice() {
@@ -351,7 +396,8 @@ async function loadPractice() {
       const button = document.createElement("button");
       button.className = "btn ghost";
       button.type = "button";
-      button.textContent = `${c.record.lot} step ${c.upTo}`;
+      button.dataset.lot = c.record.lot;
+      button.dataset.step = String(c.upTo);
       button.addEventListener("click", () => {
         $("memo").value = c.memo;
         $("canonical").value = c.canonical;
@@ -360,6 +406,7 @@ async function loadPractice() {
       });
       row.appendChild(button);
     }
+    labelPractice();
     row.hidden = false;
   } catch (e) {
     log(`Practice cases unavailable: ${e.message || e}`);
@@ -367,17 +414,40 @@ async function loadPractice() {
 }
 
 async function copy(text, button, source) {
-  const label = button.textContent;
+  const key = button.dataset.i18n;
   try {
     await navigator.clipboard.writeText(text);
-    button.textContent = "Copied";
+    button.textContent = t("copied");
   } catch {
     window.getSelection().selectAllChildren(source);
-    button.textContent = "Selected: press Ctrl+C";
+    button.textContent = t("selected");
   }
-  setTimeout(() => { button.textContent = label; }, 1800);
+  setTimeout(() => { button.textContent = t(key); }, 1800);
 }
 
+function applyLanguage() {
+  document.documentElement.lang = t("htmlLang");
+  document.title = t("title");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder)));
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === I18N.lang)));
+  renderConnect();
+  renderBalance();
+  for (const [id, m] of Object.entries(state.msgs)) if (m) show(id, t(m.key, ...resolve(m.args)), m.kind);
+  renderCheck();
+  renderIssues();
+  renderReview();
+  updatePublicLink();
+  labelPractice();
+}
+
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => {
+  if (b.dataset.lang === I18N.lang) return;
+  I18N.setLang(b.dataset.lang);
+  applyLanguage();
+}));
 ["memo", "canonical"].forEach(id => $(id).addEventListener("input", () => {
   $("reviewed").checked = false;
   checkInputs();
@@ -386,9 +456,11 @@ $("reviewed").addEventListener("change", updateSealButton);
 $("allow-conflict").addEventListener("change", updateSealButton);
 $("connect").addEventListener("click", connect);
 $("seal").addEventListener("click", seal);
-loadPractice();
 $("copy-signature").addEventListener("click", e => copy($("result-signature").textContent, e.currentTarget, $("result-signature")));
 $("copy-snippet").addEventListener("click", e => copy($("result-snippet").textContent, e.currentTarget, $("result-snippet")));
+
+applyLanguage();
+loadPractice();
 
 window.addEventListener("load", () => {
   const p = provider();

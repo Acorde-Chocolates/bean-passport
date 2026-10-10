@@ -37,6 +37,12 @@ header p { margin: 0; color: var(--muted); max-width: 62ch; }
 .issues li.err { color: var(--bad); }
 .issues li.warn { color: var(--warn); }
 .kg { color: var(--muted); font-size: 12px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lang { display: inline-flex; flex: none; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.lang button { font: 700 12px/1 var(--body); letter-spacing: .08em; padding: 9px 12px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.card h2 span:first-child { font: 500 12px/1 var(--mono); color: var(--muted); }
+.card h2 span + span { font: inherit; color: inherit; }
 .home-link { justify-self: start; font: 600 13px/1 var(--body); color: var(--muted); text-decoration: none; }
 .home-link:hover { color: var(--ink); }
 .badge { justify-self: start; font: 600 12px/1 var(--body); padding: 6px 10px; border-radius: 999px; background: var(--saffron); color: #1E1A16; }
@@ -75,10 +81,16 @@ details summary { cursor: pointer; font-weight: 600; }
 <body>
 <div class="wrap">
   <header>
-    <a class="home-link" href="./">← Bean Passport home</a>
-    <div class="eyebrow">Bean Passport · internal tool</div>
-    <h1>Seal a step</h1>
-    <p>Sends one memo transaction with the step's hash to Solana. Used by Acorde when a production step is closed. Not linked from the public page.</p>
+    <div class="top">
+      <a class="home-link" href="./" data-i18n="home">← Bean Passport home</a>
+      <div class="lang" role="group" data-i18n-aria="lang.label" aria-label="Language">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="pt" lang="pt-BR" aria-pressed="false">PT</button>
+      </div>
+    </div>
+    <div class="eyebrow" data-i18n="eyebrow">Bean Passport · internal tool</div>
+    <h1 data-i18n="heading">Seal a step</h1>
+    <p data-i18n="intro">Sends one memo transaction with the step's hash to Solana. Used by Acorde when a production step is closed. Not linked from the public page.</p>
     <div class="row">
       <span class="badge" id="cluster-badge">Solana devnet</span>
       <a class="public-link" id="public-link-top" target="_blank" rel="noopener" hidden></a>
@@ -86,26 +98,26 @@ details summary { cursor: pointer; font-weight: 600; }
   </header>
 
   <section class="card" aria-labelledby="w-title">
-    <h2 id="w-title"><span>1</span>Wallet</h2>
-    <p class="hint">Phantom must be in Testnet Mode with Solana Devnet selected (Settings › Developer Settings).</p>
+    <h2 id="w-title"><span>1</span><span data-i18n="wallet.title">Wallet</span></h2>
+    <p class="hint" data-i18n="wallet.hint">Phantom must be in Testnet Mode with Solana Devnet selected (Settings › Developer Settings).</p>
     <div class="row">
       <button class="btn" type="button" id="connect">Connect Phantom</button>
-      <a class="btn ghost" id="open-in-phantom" hidden>Open in the Phantom app</a>
+      <a class="btn ghost" id="open-in-phantom" data-i18n="openApp" hidden>Open in the Phantom app</a>
     </div>
     <dl class="kv" id="wallet-info" hidden>
-      <dt>Address</dt><dd id="wallet-address"></dd>
-      <dt>Balance</dt><dd id="wallet-balance"></dd>
+      <dt data-i18n="address">Address</dt><dd id="wallet-address"></dd>
+      <dt data-i18n="balance">Balance</dt><dd id="wallet-balance"></dd>
     </dl>
     <p class="msg" id="issuer-msg" hidden></p>
   </section>
 
   <section class="card" aria-labelledby="m-title">
-    <h2 id="m-title"><span>2</span>What to seal</h2>
-    <p class="hint">Paste the memo and the canonical record from the BP_Anchors sheet. The page recomputes the hash from the record and only lets you seal when both match.</p>
-    <label for="memo">Memo<input id="memo" autocomplete="off" spellcheck="false" placeholder="v1|LOT-ID|1|64 hex characters"></label>
-    <label for="canonical">Canonical record<textarea id="canonical" spellcheck="false" placeholder='["v1","LOT-ID",...]'></textarea></label>
+    <h2 id="m-title"><span>2</span><span data-i18n="what.title">What to seal</span></h2>
+    <p class="hint" data-i18n="what.hint">Paste the memo and the canonical record from the BP_Anchors sheet. The page recomputes the hash from the record and only lets you seal when both match.</p>
+    <label for="memo"><span data-i18n="memo.label">Memo</span><input id="memo" autocomplete="off" spellcheck="false" data-i18n-placeholder="memo.placeholder" placeholder="v1|LOT-ID|1|64 hex characters"></label>
+    <label for="canonical"><span data-i18n="canonical.label">Canonical record</span><textarea id="canonical" spellcheck="false" placeholder='["v1","LOT-ID",...]'></textarea></label>
     <div class="row" id="practice" hidden>
-      <span class="hint">Practice with the test vector:</span>
+      <span class="hint" data-i18n="practice.label">Practice with the test vector:</span>
     </div>
     <p class="msg" id="check-msg" hidden></p>
     <ul class="issues" id="issues" hidden></ul>
@@ -113,39 +125,41 @@ details summary { cursor: pointer; font-weight: 600; }
       <dl class="kv" id="review-header"></dl>
       <div class="table-wrap"><table id="review-steps"></table></div>
     </div>
-    <label class="check" for="reviewed"><input type="checkbox" id="reviewed">I checked these numbers against the spreadsheet.</label>
+    <label class="check" for="reviewed"><input type="checkbox" id="reviewed"><span data-i18n="reviewed">I checked these numbers against the spreadsheet.</span></label>
   </section>
 
   <section class="card" aria-labelledby="s-title">
-    <h2 id="s-title"><span>3</span>Seal</h2>
-    <p class="msg" data-kind="warn" id="devnet-hint">Before approving, the Phantom window must show <strong>Solana Devnet</strong>. If it shows just "Solana", "not enough SOL" or "couldn't simulate", click Cancel and switch Phantom to Devnet in Settings › Developer Settings › Testnet Mode.</p>
+    <h2 id="s-title"><span>3</span><span data-i18n="seal.title">Seal</span></h2>
+    <p class="msg" data-kind="warn" id="devnet-hint" data-i18n-html="devnet.hint">Before approving, the Phantom window must show <strong>Solana Devnet</strong>. If it shows just "Solana", "not enough SOL" or "couldn't simulate", click Cancel and switch Phantom to Devnet in Settings › Developer Settings › Testnet Mode.</p>
     <div class="row">
-      <button class="btn" type="button" id="seal" disabled>Seal on devnet</button>
+      <button class="btn" type="button" id="seal" data-i18n="seal.button" disabled>Seal on devnet</button>
     </div>
     <p class="msg" id="status" hidden></p>
-    <label class="check" for="allow-conflict" id="conflict-box" hidden><input type="checkbox" id="allow-conflict">This wallet already sealed this step with a different hash. Seal again anyway.</label>
+    <label class="check" for="allow-conflict" id="conflict-box" hidden><input type="checkbox" id="allow-conflict"><span data-i18n="conflict">This wallet already sealed this step with a different hash. Seal again anyway.</span></label>
     <div id="result" hidden>
       <dl class="kv">
-        <dt>Signature</dt><dd id="result-signature"></dd>
-        <dt>Explorer</dt><dd><a id="result-explorer" target="_blank" rel="noopener">Open on Solana Explorer ↗</a></dd>
-        <dt>Public page</dt><dd><a id="result-public" target="_blank" rel="noopener">Open the batch passport ↗</a></dd>
+        <dt data-i18n="res.signature">Signature</dt><dd id="result-signature"></dd>
+        <dt data-i18n="res.explorer">Explorer</dt><dd><a id="result-explorer" target="_blank" rel="noopener" data-i18n="res.explorerLink">Open on Solana Explorer ↗</a></dd>
+        <dt data-i18n="res.public">Public page</dt><dd><a id="result-public" target="_blank" rel="noopener" data-i18n="res.publicLink">Open the batch passport ↗</a></dd>
       </dl>
-      <p class="hint">Paste this into the batch file (<code>anchors</code>) and into BP_Anchors:</p>
+      <p class="hint" data-i18n-html="res.hint">Paste this into the batch file (<code>anchors</code>) and into BP_Anchors:</p>
       <pre id="result-snippet"></pre>
       <div class="row">
-        <button class="btn ghost" type="button" id="copy-signature">Copy signature</button>
-        <button class="btn ghost" type="button" id="copy-snippet">Copy anchor line</button>
+        <button class="btn ghost" type="button" id="copy-signature" data-i18n="copySignature">Copy signature</button>
+        <button class="btn ghost" type="button" id="copy-snippet" data-i18n="copySnippet">Copy anchor line</button>
       </div>
+      <p class="hint" data-i18n="res.notice">The public page shows this seal once the batch file is updated and the site is deployed (up to about 10 minutes).</p>
     </div>
   </section>
 
   <details>
-    <summary>Log</summary>
+    <summary data-i18n="log">Log</summary>
     <pre id="log"></pre>
   </details>
 </div>
 <script src="vendor/solana-web3-1.98.4.iife.min.js"></script>
 <script src="js/config.js?v=__V__"></script>
+<script src="js/anchor-i18n.js?v=__V__"></script>
 <script src="js/anchor.js?v=__V__"></script>
 </body>
 </html>
