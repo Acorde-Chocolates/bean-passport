@@ -41,7 +41,7 @@ Stop and ask the user if the diff contains any of these:
 
 | Area | Check before committing |
 |---|---|
-| `site/data/lots/*.json` | Every signature in `anchors` was verified on devnet (memo equals `v1\|<lot>\|<step>\|<sha256>` and the fee payer is the issuer). Values of already sealed steps are unchanged. One anchor per step |
+| `site/data/lots/*.json` | `node tools/check.mjs --chain` passes. Every signature in `anchors` was verified on devnet (memo equals `v1\|<lot>\|<step>\|<sha256>` and the fee payer is the issuer). Values of already sealed steps are unchanged. One anchor per step |
 | `site/spec/*` | The change was announced in the team group. Any change to the serialization is `v2`, never an edit of `v1` |
 | Code near the record, hash or memo | The test vector still passes (command in `AGENTS.md`) |
 | HTML referencing local CSS or JS | Every reference ends with `?v=__V__` |
@@ -66,7 +66,7 @@ Stop and ask the user if the diff contains any of these:
 | `apps-script` | `apps-script/` |
 | `design` | `design/` |
 | `deps` | `site/vendor/` |
-| `ci` | `.github/` |
+| `ci` | `.github/`, `tools/` |
 | `docs` | README and other docs |
 | `agents` | `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/` |
 

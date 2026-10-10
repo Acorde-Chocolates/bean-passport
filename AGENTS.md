@@ -46,7 +46,8 @@ The public pages are bilingual for users: **English by default**, Portuguese thr
 | `site/data/lots/<lot>.json` | Public batch files: `record` (exact strings) + `anchors` (step → signature) |
 | `apps-script/` | Google Apps Script layer that builds records and memos from the factory spreadsheet |
 | `design/` | Mockups. Not published |
-| `.github/workflows/pages.yml` | Deploys `site/` and stamps `?v=__V__` with the commit SHA |
+| `tools/check.mjs` | Checks the test vector, every batch file, its seals on devnet and the cache-busting stamps |
+| `.github/workflows/pages.yml` | Runs `tools/check.mjs --chain`, then deploys `site/` and stamps `?v=__V__` with the commit SHA. A failing check stops the deploy and keeps the current site online |
 
 ## Invariants: do not break these
 
@@ -77,7 +78,15 @@ Open `http://localhost:8000/`, `http://localhost:8000/lote/?id=TEST-0001` and `h
 
 Phantom must be in Testnet Mode with **Solana Devnet** selected. If its approval window shows just "Solana", "not enough SOL" or "couldn't simulate", it is on mainnet: cancel and switch.
 
-## Check the contract
+## Check before pushing
+
+```bash
+node tools/check.mjs --chain
+```
+
+The deploy runs the same check. It fails on a broken record, a changed sealed value, a signature pasted on the wrong step, a duplicate anchor, a missing `?v=__V__` or a changed test vector. If devnet is unreachable it only warns.
+
+## Check the contract by hand
 
 Any change near the record, hash or memo must keep the test vector passing:
 
