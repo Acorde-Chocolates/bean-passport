@@ -1,0 +1,146 @@
+{
+  "spec": "canonical-record-v1",
+  "cases": [
+    {
+      "name": "TEST-0001 up to step 1",
+      "record": {
+        "lot": "TEST-0001",
+        "product": "Test Bar 70",
+        "producer": "TST-01",
+        "municipality": "Testville",
+        "state": "BA",
+        "origin_lot": "",
+        "purchase_date": "2026-07-15",
+        "steps": [
+          {
+            "n": "1",
+            "step": "roasting",
+            "date": "2026-10-01",
+            "input_g": "1000",
+            "output_g": "965",
+            "byproduct_g": "",
+            "units": "",
+            "profile": ""
+          },
+          {
+            "n": "2",
+            "step": "winnowing",
+            "date": "2026-10-02",
+            "input_g": "965",
+            "output_g": "700",
+            "byproduct_g": "250",
+            "units": "",
+            "profile": ""
+          }
+        ]
+      },
+      "upTo": 1,
+      "canonical": "[\"v1\",\"TEST-0001\",\"Test Bar 70\",\"TST-01\",\"Testville\",\"BA\",\"\",\"2026-07-15\",[\"1\",\"roasting\",\"2026-10-01\",\"1000\",\"965\",\"\",\"\",\"\"]]",
+      "sha256": "7c63092d2e44d3b53ccc7e8b5f2b4cc7e1f53996fc7bf1514d7a8ba332c52055",
+      "memo": "v1|TEST-0001|1|7c63092d2e44d3b53ccc7e8b5f2b4cc7e1f53996fc7bf1514d7a8ba332c52055"
+    },
+    {
+      "name": "TEST-0001 up to step 2",
+      "record": {
+        "lot": "TEST-0001",
+        "product": "Test Bar 70",
+        "producer": "TST-01",
+        "municipality": "Testville",
+        "state": "BA",
+        "origin_lot": "",
+        "purchase_date": "2026-07-15",
+        "steps": [
+          {
+            "n": "1",
+            "step": "roasting",
+            "date": "2026-10-01",
+            "input_g": "1000",
+            "output_g": "965",
+            "byproduct_g": "",
+            "units": "",
+            "profile": ""
+          },
+          {
+            "n": "2",
+            "step": "winnowing",
+            "date": "2026-10-02",
+            "input_g": "965",
+            "output_g": "700",
+            "byproduct_g": "250",
+            "units": "",
+            "profile": ""
+          }
+        ]
+      },
+      "upTo": 2,
+      "canonical": "[\"v1\",\"TEST-0001\",\"Test Bar 70\",\"TST-01\",\"Testville\",\"BA\",\"\",\"2026-07-15\",[\"1\",\"roasting\",\"2026-10-01\",\"1000\",\"965\",\"\",\"\",\"\"],[\"2\",\"winnowing\",\"2026-10-02\",\"965\",\"700\",\"250\",\"\",\"\"]]",
+      "sha256": "3c7a84598116994a8cba9fc890b86329b2b788f29721c0854c08eceddea281b2",
+      "memo": "v1|TEST-0001|2|3c7a84598116994a8cba9fc890b86329b2b788f29721c0854c08eceddea281b2"
+    },
+    {
+      "name": "TEST-0002 accents and empty values",
+      "record": {
+        "lot": "TEST-0002",
+        "product": "Maracujá",
+        "producer": "Sítio São João",
+        "municipality": "Ilhéus",
+        "state": "BA",
+        "origin_lot": "",
+        "purchase_date": "",
+        "steps": [
+          {
+            "n": "1",
+            "step": "roasting",
+            "date": "2026-10-01",
+            "input_g": "1000",
+            "output_g": "",
+            "byproduct_g": "",
+            "units": "",
+            "profile": ""
+          }
+        ]
+      },
+      "upTo": 1,
+      "canonical": "[\"v1\",\"TEST-0002\",\"Maracujá\",\"Sítio São João\",\"Ilhéus\",\"BA\",\"\",\"\",[\"1\",\"roasting\",\"2026-10-01\",\"1000\",\"\",\"\",\"\",\"\"]]",
+      "sha256": "d407a0b5f16bbccb36ee2b55f6eda58c5fe3fdc4a9d1562a3bed135fb293652d",
+      "memo": "v1|TEST-0002|1|d407a0b5f16bbccb36ee2b55f6eda58c5fe3fdc4a9d1562a3bed135fb293652d"
+    }
+  ],
+  "normalization": [
+    {
+      "kind": "grams",
+      "input": 6.08,
+      "expected": "6080"
+    },
+    {
+      "kind": "grams",
+      "input": 4.302,
+      "expected": "4302"
+    },
+    {
+      "kind": "grams",
+      "input": "",
+      "expected": ""
+    },
+    {
+      "kind": "text",
+      "input": " Ibirapitanga ",
+      "expected": "Ibirapitanga"
+    },
+    {
+      "kind": "text",
+      "input": "Riachões",
+      "expected": "Riachões"
+    },
+    {
+      "kind": "date",
+      "input": "2026-10-07T02:30:00Z",
+      "expected": "2026-10-06"
+    },
+    {
+      "kind": "date",
+      "input": "07/10/2026",
+      "expected": "error"
+    }
+  ]
+}

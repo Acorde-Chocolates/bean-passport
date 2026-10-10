@@ -1,0 +1,36 @@
+{
+  "schema": "bean-passport.lot.v1",
+  "record": {
+    "lot": "TEST-0001",
+    "product": "Test Bar 70",
+    "producer": "TST-01",
+    "municipality": "Testville",
+    "state": "BA",
+    "origin_lot": "",
+    "purchase_date": "2026-07-15",
+    "steps": [
+      {
+        "n": "1",
+        "step": "roasting",
+        "date": "2026-10-01",
+        "input_g": "1000",
+        "output_g": "965",
+        "byproduct_g": "",
+        "units": "",
+        "profile": ""
+      },
+      {
+        "n": "2",
+        "step": "winnowing",
+        "date": "2026-10-02",
+        "input_g": "965",
+        "output_g": "700",
+        "byproduct_g": "250",
+        "units": "",
+        "profile": ""
+      }
+    ]
+  },
+  "anchors": [],
+  "exported_at": "2026-10-09T22:00:00-03:00"
+}
