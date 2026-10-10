@@ -1,9 +1,13 @@
 const { Connection, PublicKey, Transaction, TransactionInstruction } = window.solanaWeb3;
 const CFG = window.BP_CONFIG;
 const MEMO_PROGRAM = new PublicKey(CFG.memoProgram);
-const MEMO_RE = /^v1\|([A-Za-z0-9-]{1,32})\|([1-9])\|([0-9a-f]{64})$/;
+const MEMO_RE = /^v1\|([A-Za-z0-9-]{1,32})\|([1-5])\|([0-9a-f]{64})$/;
 const HEADER = ["lot", "product", "producer", "municipality", "state", "origin_lot", "purchase_date"];
 const STEP = ["n", "step", "date", "input_g", "output_g", "byproduct_g", "units", "profile"];
+const STEP_CODES = ["roasting", "winnowing", "grinding", "tempering_molding", "packaging"];
+const WEIGHT_FIELDS = [3, 4, 5];
+const MIN_G = 50;
+const MAX_G = 50000;
 const LOW_BALANCE = 50000;
 
 const conn = new Connection(CFG.rpcUrl, "confirmed");
@@ -58,11 +62,79 @@ function parseCanonical(raw) {
   return { text, header, steps };
 }
 
+const isDigits = v => /^\d*$/.test(v);
+const kg = v => `${(Number(v) / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })} kg`;
+const todayBRT = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+
+function validDate(d) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  const t = new Date(d + "T12:00:00Z");
+  return !isNaN(t) && t.toISOString().slice(0, 10) === d;
+}
+
+function validateRecord(record) {
+  const errors = [];
+  const warnings = [];
+  const today = todayBRT();
+  const [lot, product, producer, , state, , purchaseDate] = record.header;
+  const values = [...record.header.map((v, i) => [HEADER[i], v]), ...record.steps.flatMap((s, i) => s.map((v, j) => [`step ${i + 1} ${STEP[j]}`, v]))];
+  for (const [label, v] of values) {
+    if (v !== v.trim()) errors.push(`${label} has spaces at the start or end.`);
+    if (v !== v.normalize("NFC")) errors.push(`${label} is not in NFC form. Export it again from the spreadsheet.`);
+  }
+  if (!/^[A-Za-z0-9-]{1,32}$/.test(lot)) errors.push(`lot "${lot}" must use only letters, digits and hyphens (up to 32).`);
+  if (!product) errors.push("product is empty.");
+  if (!producer) warnings.push("producer is empty. Use the producer code (for example FOR004).");
+  if (state && !/^[A-Z]{2}$/.test(state)) warnings.push(`state "${state}" is not a two-letter code (for example BA).`);
+  if (purchaseDate && !validDate(purchaseDate)) errors.push(`purchase_date "${purchaseDate}" is not a real date in yyyy-MM-dd.`);
+  if (purchaseDate && validDate(purchaseDate) && purchaseDate > today) errors.push(`purchase_date ${purchaseDate} is in the future.`);
+  if (record.steps.length > STEP_CODES.length) errors.push(`The record has ${record.steps.length} steps. The format allows at most ${STEP_CODES.length}.`);
+  let previousDate = purchaseDate && validDate(purchaseDate) ? purchaseDate : "";
+  record.steps.forEach((s, i) => {
+    const n = i + 1;
+    const [, code, date, input, output, byproduct, units] = s;
+    const expected = STEP_CODES[i];
+    if (expected && code !== expected) errors.push(`Step ${n}: code is "${code}", expected "${expected}". Conching belongs to grinding.`);
+    if (!date) errors.push(`Step ${n}: date is empty.`);
+    else if (!validDate(date)) errors.push(`Step ${n}: date "${date}" is not a real date in yyyy-MM-dd.`);
+    else {
+      if (date > today) errors.push(`Step ${n}: date ${date} is in the future.`);
+      if (previousDate && date < previousDate) warnings.push(`Step ${n}: date ${date} is earlier than the previous date (${previousDate}).`);
+      previousDate = date;
+    }
+    for (const j of WEIGHT_FIELDS) {
+      const v = s[j];
+      if (!isDigits(v)) errors.push(`Step ${n}: ${STEP[j]} "${v}" must be whole grams, digits only.`);
+      else if (v !== "" && (Number(v) < MIN_G || Number(v) > MAX_G)) warnings.push(`Step ${n}: ${STEP[j]} is ${Number(v).toLocaleString("en-US")} g (${kg(v)}). Check it is in grams, not kilograms.`);
+    }
+    if (!isDigits(units)) errors.push(`Step ${n}: units "${units}" must be a whole number.`);
+    if (input === "") warnings.push(`Step ${n}: input_g is empty.`);
+    if (isDigits(input) && isDigits(output) && input !== "" && output !== "" && Number(output) > Number(input) && code !== "grinding") {
+      warnings.push(`Step ${n}: output (${Number(output).toLocaleString("en-US")} g) is larger than input (${Number(input).toLocaleString("en-US")} g).`);
+    }
+    if (byproduct !== "" && code !== "winnowing") warnings.push(`Step ${n}: byproduct_g is filled, but only winnowing has a byproduct (husk).`);
+  });
+  return { errors, warnings };
+}
+
+function renderIssues(result) {
+  const list = $("issues");
+  if (!result || (!result.errors.length && !result.warnings.length)) { list.hidden = true; list.innerHTML = ""; return; }
+  list.innerHTML = result.errors.map(e => `<li class="err">${esc(e)}</li>`).join("") + result.warnings.map(w => `<li class="warn">${esc(w)}</li>`).join("");
+  list.hidden = false;
+}
+
+function cell(v, j) {
+  if (v === "") return "—";
+  if (WEIGHT_FIELDS.includes(j) && /^\d+$/.test(v)) return `${esc(v)} <span class="kg">${kg(v)}</span>`;
+  return esc(v);
+}
+
 function renderReview(record) {
   if (!record || record.error) { $("review").hidden = true; return; }
   $("review-header").innerHTML = HEADER.map((k, i) => `<dt>${k}</dt><dd>${esc(record.header[i] || "—")}</dd>`).join("");
   $("review-steps").innerHTML = `<thead><tr>${STEP.map(k => `<th>${k}</th>`).join("")}</tr></thead><tbody>` +
-    record.steps.map(s => `<tr>${s.map(v => `<td>${esc(v || "—")}</td>`).join("")}</tr>`).join("") + `</tbody>`;
+    record.steps.map(s => `<tr>${s.map((v, j) => `<td>${cell(v, j)}</td>`).join("")}</tr>`).join("") + `</tbody>`;
   $("review").hidden = false;
 }
 
@@ -87,10 +159,12 @@ async function checkInputs() {
   state.memo = memoRaw ? parseMemo(memoRaw) : null;
   state.record = parseCanonical(canonRaw);
   renderReview(state.record);
+  const validation = state.record && !state.record.error ? validateRecord(state.record) : null;
+  renderIssues(validation);
   let msg = "";
   let kind = "";
   if (!memoRaw && !canonRaw) msg = "";
-  else if (memoRaw && !state.memo) { msg = "The memo must look like v1|LOT-ID|STEP|HASH: lot with letters, digits and hyphens, step 1 to 9, hash with 64 lowercase hex characters."; kind = "bad"; }
+  else if (memoRaw && !state.memo) { msg = "The memo must look like v1|LOT-ID|STEP|HASH: lot with letters, digits and hyphens, step 1 to 5, hash with 64 lowercase hex characters."; kind = "bad"; }
   else if (!state.record) { msg = "Paste the canonical record too. The page needs it to recompute the hash."; kind = "warn"; }
   else if (state.record.error) { msg = state.record.error; kind = "bad"; }
   else if (!state.memo) { msg = "Paste the memo too."; kind = "warn"; }
@@ -102,6 +176,8 @@ async function checkInputs() {
     if (state.memo.lot !== lot) { msg = `The memo is for lot ${state.memo.lot}, but the record is for lot ${lot}.`; kind = "bad"; }
     else if (state.memo.step !== lastStep) { msg = `The memo is for step ${state.memo.step}, but the record goes up to step ${lastStep}.`; kind = "bad"; }
     else if (state.memo.hash !== hash) { msg = `The hash in the memo doesn't match the record. Recomputed here: ${hash}`; kind = "bad"; }
+    else if (validation.errors.length) { msg = `Memo and record match, but the record has ${validation.errors.length === 1 ? "1 problem" : `${validation.errors.length} problems`} listed below. Fix them in the spreadsheet and export again: a seal can't be undone.`; kind = "bad"; }
+    else if (validation.warnings.length) { msg = `Memo and record match: lot ${lot}, step ${lastStep}, hash ${hash.slice(0, 12)}…. Check the warnings below before sealing.`; kind = "warn"; state.ready = true; }
     else { msg = `Memo and record match: lot ${lot}, step ${lastStep}, hash ${hash.slice(0, 12)}…`; kind = "ok"; state.ready = true; }
   }
   if (my !== checkId) return;
