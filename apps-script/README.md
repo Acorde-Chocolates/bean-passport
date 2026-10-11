@@ -22,7 +22,7 @@ Generates canonical v1 records, UTF-8 SHA-256 hashes, memos and passport QR code
 4. In project settings, enable the V8 runtime and the America/Sao_Paulo timezone. Show the manifest and use this folder's `appsscript.json`.
 5. Save, open **tests.gs** in the editor, select **testVectorV1** and run it. Expect `passed: true`, `cases: 3`, `normalizations: 7`, `checks: 16`.
 6. Open **mpb.gs**, select **prepareMpbAnchorsV1** and run it. Each step prints its memo and its compact, single-line canonical record. Copy those two texts into the sealing page; keep the record on one line.
-7. Open **qr.gs**, select **saveLotQrV1** and run it to create `QR-ACD-0142.svg` in Drive. **saveDemoQrV1** instead creates the TEST-0001 passport QR.
+7. Open **qr.gs**, select **saveLotQrV1** and run it to create `QR-LOT033-2026.svg` in Drive. **saveDemoQrV1** instead creates the TEST-0001 passport QR.
 
 The split files replace the previous combined script. Keep one definition of each function and constant per project. The record functions do not access Drive, Sheets, a wallet or the network. Drive access is used only when saving a QR.
 
@@ -59,9 +59,9 @@ Already-normalized grams and yyyy-MM-dd strings go straight into the record. Do 
 
 ## QR destination
 
-`qr.gs` configures only `lot: 'ACD-0142'`. Its destination is:
+`qr.gs` configures only `lot: 'LOT033-2026'`. Its destination is:
 
-https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142
+https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026
 
 The demo destination is the same route with `id=TEST-0001`. SVG generation uses the pinned library locally with a four-module white border. New seals appear on the same public page without changing the QR. Check the printed label with a phone camera at its intended size before printing the batch.
 
@@ -89,3 +89,5 @@ After installing the revised split files, execute the Google tests separately; l
 - prepareMpbAnchorsV1 generated all five ACD-0142 pairs, matching the tested canonical texts, SHA-256 hashes and memos.
 - saveLotQrV1 created QR-ACD-0142.svg in Drive. A phone scan opened the correct public passport.
 - Real spreadsheet cell mapping and BP_Anchors writing remain an integration step with the production team.
+
+On 2026-10-11 the real batch id changed from ACD-0142 to LOT033-2026, the id the factory system prints as LOT033/2026 (the lot format allows no slash). Nothing was sealed under the old id. Run prepareMpbAnchorsV1 and saveLotQrV1 again: the QR created on 2026-10-10 points to the old id.

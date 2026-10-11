@@ -139,7 +139,7 @@ async function main() {
 
   await check('all five MPB steps preserve confirmed facts and match the original anchor page', async () => {
     const record = core.buildMpbRecordV1();
-    const published = JSON.parse(read('site/data/lots/ACD-0142.json')).record;
+    const published = JSON.parse(read('site/data/lots/LOT033-2026.json')).record;
     const header = value => Object.fromEntries(headerFields.map(field => [field, value[field]]));
     assert.deepEqual(header(record), header(published));
     assert.equal(record.product, 'Barra MPB 60 g');
@@ -218,7 +218,7 @@ async function main() {
   });
 
   await check('the production record has the same field order as the v1 contract', () => {
-    const record = JSON.parse(read('site/data/lots/ACD-0142.json')).record;
+    const record = JSON.parse(read('site/data/lots/LOT033-2026.json')).record;
     const prepared = core.prepareAnchor(record, record.steps.length);
     assert.equal(prepared.canonical, JSON.stringify(canonicalArray(record)));
   });

@@ -1,6 +1,6 @@
 function buildMpbRecordV1() {
   const header = {
-    lot: 'ACD-0142',
+    lot: 'LOT033-2026',
     product: 'Barra MPB 60 g',
     producer: 'FOR004',
     municipality: 'Ibirapitanga',

@@ -1,4 +1,4 @@
-const BP_QR_CONFIG_V1 = Object.freeze({ lot: 'ACD-0142' });
+const BP_QR_CONFIG_V1 = Object.freeze({ lot: 'LOT033-2026' });
 
 function buildPassportUrlV1(lot) {
   if (arguments.length !== 1 || typeof lot !== 'string' ||

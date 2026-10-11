@@ -56,7 +56,7 @@ async function decodeSvg(svg, expectedUrl) {
 }
 
 async function main() {
-  const lots = ['ACD-0142', 'TEST-0001', 'x', 'A'.repeat(32)];
+  const lots = ['LOT033-2026', 'TEST-0001', 'x', 'A'.repeat(32)];
   for (const lot of lots) {
     const expectedUrl = 'https://acorde-chocolates.github.io/bean-passport/lote/?id=' + lot;
     assert.equal(context.buildPassportUrlV1(lot), expectedUrl);
@@ -69,14 +69,14 @@ async function main() {
     console.log('PASS rendered SVG decodes to passport URL: ' + lot);
   }
 
-  for (const lot of ['', null, undefined, 142, 'A'.repeat(33), ' ACD-0142', 'ACD-0142 ',
-    'ACD_0142', 'ACD/0142', 'ACD-0142&id=TEST-0001', '../TEST-0001', 'ÁCD-0142']) {
+  for (const lot of ['', null, undefined, 142, 'A'.repeat(33), ' LOT033-2026', 'LOT033-2026 ',
+    'LOT033_2026', 'LOT033/2026', 'LOT033-2026&id=TEST-0001', '../TEST-0001', 'LÓT033-2026']) {
     assert.throws(() => context.buildPassportUrlV1(lot));
     assert.throws(() => context.buildLotQrV1(lot));
   }
-  assert.throws(() => context.buildPassportUrlV1('ACD-0142', 'https://example.com/'));
-  assert.throws(() => context.buildLotQrV1('ACD-0142', 'https://example.com/lote/?id=TEST-0001'));
-  assert.throws(() => context.buildLotQrV1({ lot: 'ACD-0142', url: 'https://example.com/' }));
+  assert.throws(() => context.buildPassportUrlV1('LOT033-2026', 'https://example.com/'));
+  assert.throws(() => context.buildLotQrV1('LOT033-2026', 'https://example.com/lote/?id=TEST-0001'));
+  assert.throws(() => context.buildLotQrV1({ lot: 'LOT033-2026', url: 'https://example.com/' }));
   console.log('PASS lot validation and mismatched caller-supplied URLs are rejected.');
 
   for (const url of ['', null, 1, 'http://example.com/', 'javascript:alert(1)', 'https://',
@@ -89,7 +89,7 @@ async function main() {
 
   const lotResult = context.saveLotQrV1();
   const demoResult = context.saveDemoQrV1();
-  assert.equal(lotResult.lot, 'ACD-0142');
+  assert.equal(lotResult.lot, 'LOT033-2026');
   assert.equal(demoResult.lot, 'TEST-0001');
   assert.equal(files.length, 2);
   for (const [index, result] of [lotResult, demoResult].entries()) {
