@@ -302,7 +302,7 @@ $("up-to").addEventListener("change", e => {
   compute();
 });
 $("load-test").addEventListener("click", () => load("TEST-0001"));
-$("load-real").addEventListener("click", () => load("ACD-0142"));
+$("load-real").addEventListener("click", () => load("LOT033-2026"));
 $("load-blank").addEventListener("click", clear);
 $("copy-canonical").addEventListener("click", e => copy($("canonical").textContent, e.currentTarget, $("canonical")));
 $("copy-memo").addEventListener("click", e => copy($("memo").textContent, e.currentTarget, $("memo")));
