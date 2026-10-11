@@ -12,7 +12,7 @@ Built for the **Crypto World's Fair** hackathon (Colosseum), Solana track. Runs 
 |---|---|
 | Home | https://acorde-chocolates.github.io/bean-passport/ |
 | Passport of a practice batch, 2 steps sealed on devnet | https://acorde-chocolates.github.io/bean-passport/lote/?id=TEST-0001 |
-| Passport of the real MPB batch (sealing in progress) | https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142 |
+| Passport of the real MPB batch (sealing in progress) | https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026 |
 | Sealing page used by the factory | https://acorde-chocolates.github.io/bean-passport/anchor.html |
 
 The pages are in English by default, with Portuguese through the EN | PT toggle. On a passport, open **Verify it yourself**, or use **Try changing a number** to watch the seals of that step and every later step fail.
@@ -23,12 +23,12 @@ A passport also has a simulation mode: add `simular=<scenario>` to its address a
 
 | Scenario | What the passport shows | Open |
 |---|---|---|
-| Batch in production: 3 steps recorded, 2 sealed | Steps 1 and 2 verified, step 3 not sealed yet | [producao](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=producao) |
-| Every recorded step sealed | Every step verified | [concluido](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=concluido) |
-| A sealed number edited afterwards (step 2 output) | "Changed" on step 2 and on every later step | [alterado](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=alterado) |
-| Step 3 sealed by a wallet that is not the official one | "Other wallet" on step 3 | [outra-carteira](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=outra-carteira) |
-| Step 3 signature missing from the chain | "Seal not found" on step 3 | [selo-nao-encontrado](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=selo-nao-encontrado) |
-| The network is down | "No connection", never "Changed" | [erro-rede](https://acorde-chocolates.github.io/bean-passport/lote/?id=ACD-0142&simular=erro-rede) |
+| Batch in production: 3 steps recorded, 2 sealed | Steps 1 and 2 verified, step 3 not sealed yet | [producao](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=producao) |
+| Every recorded step sealed | Every step verified | [concluido](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=concluido) |
+| A sealed number edited afterwards (step 2 output) | "Changed" on step 2 and on every later step | [alterado](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=alterado) |
+| Step 3 sealed by a wallet that is not the official one | "Other wallet" on step 3 | [outra-carteira](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=outra-carteira) |
+| Step 3 signature missing from the chain | "Seal not found" on step 3 | [selo-nao-encontrado](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=selo-nao-encontrado) |
+| The network is down | "No connection", never "Changed" | [erro-rede](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=erro-rede) |
 
 TEST-0001 seals on devnet: [step 1](https://explorer.solana.com/tx/4hmn6cN4yHPKqBXqKZAPoZDyCvMt9rwRt943XUCdQnZwmB5zDiVAgiSMQ2Dv2hUFnfVHngstyuyAxKFVLiZW9v4W?cluster=devnet) · [step 2](https://explorer.solana.com/tx/DtLjwWRbXcNp4r8M6NBYZGurtsMJkcNjEnL68BcHyrDhRc7e9wL2mMCfRHjszEpjruidbfNBqSopVqbuphL2Zim?cluster=devnet)
 
