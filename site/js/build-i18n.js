@@ -8,7 +8,7 @@ window.BP_BUILD_I18N = (() => {
       home: "← Bean Passport home",
       eyebrow: "Bean Passport · how a seal is built",
       heading: "Build a seal",
-      intro: "This page does in your browser what the factory's Apps Script does inside its spreadsheet: it turns production numbers into the canonical record, its SHA-256 fingerprint and the memo that gets sealed on Solana.",
+      intro: "This page does in your browser what the factory's Apps Script does inside its spreadsheet: it turns production numbers into the canonical record, its SHA-256 fingerprint, the memo that gets sealed on Solana and the QR code for the wrapper.",
       badge: "Demo: nothing is sent or sealed",
       "vector.loading": "Checking this page against the official test vector…",
       "vector.ok": n => `This page reproduces the official test vector: ${n} of ${n} checks pass.`,
@@ -76,6 +76,11 @@ window.BP_BUILD_I18N = (() => {
       "next.anchor": "Paste it on the sealing page →",
       "next.passport": lot => `Open the passport of ${lot} →`,
       "next.apps": "Apps Script source on GitHub →",
+      "qr.title": "QR code for the wrapper",
+      "qr.hint": "The Apps Script's saveLotQrV1 makes this same SVG, with the same library, and saves it to the factory's Drive. It only carries the passport address, so new seals show up without reprinting.",
+      "qr.download": "Download SVG",
+      "qr.empty": "Fill in a valid lot code to draw the QR code.",
+      "qr.alt": lot => `QR code that opens the passport of ${lot}`,
       footer: "The factory runs these same steps in Google Apps Script, inside its private spreadsheet. This page only shows them: it can't seal anything."
     },
     pt: {
@@ -86,7 +91,7 @@ window.BP_BUILD_I18N = (() => {
       home: "← Início do Bean Passport",
       eyebrow: "Bean Passport · como um selo é montado",
       heading: "Montar um selo",
-      intro: "Esta página faz no seu navegador o que o Apps Script da fábrica faz dentro da planilha: transforma os números de produção no registro canônico, na impressão digital SHA-256 e no memo que é selado na Solana.",
+      intro: "Esta página faz no seu navegador o que o Apps Script da fábrica faz dentro da planilha: transforma os números de produção no registro canônico, na impressão digital SHA-256, no memo que é selado na Solana e no QR code da embalagem.",
       badge: "Demonstração: nada é enviado nem selado",
       "vector.loading": "Conferindo esta página com o vetor de teste oficial…",
       "vector.ok": n => `Esta página reproduz o vetor de teste oficial: ${n} de ${n} checagens passam.`,
@@ -154,6 +159,11 @@ window.BP_BUILD_I18N = (() => {
       "next.anchor": "Colar na página de selagem →",
       "next.passport": lot => `Abrir o passaporte do lote ${lot} →`,
       "next.apps": "Código do Apps Script no GitHub →",
+      "qr.title": "QR code da embalagem",
+      "qr.hint": "O saveLotQrV1 do Apps Script gera este mesmo SVG, com a mesma biblioteca, e salva no Drive da fábrica. Ele só leva o endereço do passaporte, então selos novos aparecem sem reimprimir.",
+      "qr.download": "Baixar SVG",
+      "qr.empty": "Preencha um código de lote válido para desenhar o QR code.",
+      "qr.alt": lot => `QR code que abre o passaporte do lote ${lot}`,
       footer: "A fábrica faz estes mesmos passos no Google Apps Script, dentro da planilha privada dela. Esta página só mostra os passos: ela não consegue selar nada."
     }
   };

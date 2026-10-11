@@ -8,8 +8,9 @@ const COLUMNS = ["date", "input", "output", "byproduct", "units", "profile"];
 const KG_COLUMNS = { input: "input_g", output: "output_g", byproduct: "byproduct_g" };
 const LOT_RE = /^[A-Za-z0-9-]{1,32}$/;
 const DEFAULT_LOT = "TEST-0001";
+const PASSPORT_URL = lot => `https://acorde-chocolates.github.io/bean-passport/lote/?id=${lot}`;
 
-const state = { batch: null, upTo: null, upToPinned: false, last: null, notes: [], errors: [], seals: {}, msgs: {} };
+const state = { batch: null, upTo: null, upToPinned: false, last: null, qr: null, notes: [], errors: [], seals: {}, msgs: {} };
 let runId = 0;
 
 const $ = id => document.getElementById(id);
@@ -45,6 +46,48 @@ function normalizeText(raw, where, notes) {
   if (trimmed !== raw) notes.push(["n.trim", where]);
   if (value !== trimmed) notes.push(["n.nfc", where]);
   return value;
+}
+
+function qrSvg(url) {
+  const qr = qrcodegen.QrCode.encodeText(url, qrcodegen.QrCode.Ecc.MEDIUM);
+  const border = 4;
+  const size = qr.size + border * 2;
+  const paths = [];
+  for (let y = 0; y < qr.size; y++) {
+    for (let x = 0; x < qr.size; x++) {
+      if (qr.getModule(x, y)) paths.push(`M${x + border},${y + border}h1v1h-1z`);
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 8}" height="${size * 8}" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">` +
+    `<rect width="100%" height="100%" fill="#ffffff"/><path fill="#000000" d="${paths.join(" ")}"/></svg>`;
+}
+
+function renderQr(lot) {
+  const valid = LOT_RE.test(lot);
+  if (!valid) state.qr = null;
+  else if (!state.qr || state.qr.lot !== lot) {
+    const url = PASSPORT_URL(lot);
+    state.qr = { lot, url, svg: qrSvg(url) };
+    $("qr").innerHTML = state.qr.svg;
+    $("qr-url").href = url;
+    $("qr-url").textContent = url;
+  }
+  $("qr-box").hidden = !valid;
+  $("qr-empty").hidden = valid;
+  if (valid) $("qr").setAttribute("aria-label", t("qr.alt", lot));
+}
+
+function downloadQr() {
+  const q = state.qr;
+  if (!q) return;
+  const href = URL.createObjectURL(new Blob([q.svg], { type: "image/svg+xml" }));
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = `QR-${q.lot}.svg`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
 }
 
 function show(id, text, kind) {
@@ -184,6 +227,7 @@ async function compute() {
   const { record, count, notes, errors } = readRecord();
   state.notes = notes;
   state.errors = errors;
+  renderQr(record.lot);
   renderMessages();
   renderUpTo(count);
   if (errors.length || !state.upTo) {
@@ -287,6 +331,7 @@ function applyLanguage() {
   renderMessages();
   renderUpTo(state.upTo ? $("up-to").options.length : 0);
   renderOutput();
+  if (state.qr) renderQr(state.qr.lot);
 }
 
 buildSteps();
@@ -306,6 +351,7 @@ $("load-real").addEventListener("click", () => load("LOT033-2026"));
 $("load-blank").addEventListener("click", clear);
 $("copy-canonical").addEventListener("click", e => copy($("canonical").textContent, e.currentTarget, $("canonical")));
 $("copy-memo").addEventListener("click", e => copy($("memo").textContent, e.currentTarget, $("memo")));
+$("download-qr").addEventListener("click", downloadQr);
 
 applyLanguage();
 checkVector();

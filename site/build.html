@@ -71,6 +71,10 @@ td input.col-profile { min-width: 96px; }
 pre, .out { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); font: 400 13px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
 .out.big { font-size: 15px; font-weight: 500; }
 .links { display: grid; gap: 8px; font: 600 14px/1.3 var(--body); }
+.qr-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.qr { width: 200px; flex: none; border-radius: 8px; overflow: hidden; background: #FFFFFF; }
+.qr svg { display: block; width: 100%; height: auto; }
+.qr-side { flex: 1 1 240px; display: grid; gap: 10px; min-width: 0; }
 a { color: inherit; }
 footer { font-size: 13px; color: var(--muted); }
 :focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
@@ -88,7 +92,7 @@ footer { font-size: 13px; color: var(--muted); }
     </div>
     <div class="eyebrow" data-i18n="eyebrow">Bean Passport · how a seal is built</div>
     <h1 data-i18n="heading">Build a seal</h1>
-    <p data-i18n="intro">This page does in your browser what the factory's Apps Script does inside its spreadsheet: it turns production numbers into the canonical record, its SHA-256 fingerprint and the memo that gets sealed on Solana.</p>
+    <p data-i18n="intro">This page does in your browser what the factory's Apps Script does inside its spreadsheet: it turns production numbers into the canonical record, its SHA-256 fingerprint, the memo that gets sealed on Solana and the QR code for the wrapper.</p>
     <span class="badge" data-i18n="badge">Demo: nothing is sent or sealed</span>
     <p class="msg" id="vector-msg" hidden></p>
   </header>
@@ -153,8 +157,22 @@ footer { font-size: 13px; color: var(--muted); }
     </div>
   </section>
 
+  <section class="card" aria-labelledby="qr-title">
+    <h2 id="qr-title"><span>6</span><span data-i18n="qr.title">QR code for the wrapper</span></h2>
+    <p class="hint" data-i18n="qr.hint">The Apps Script's saveLotQrV1 makes this same SVG, with the same library, and saves it to the factory's Drive. It only carries the passport address, so new seals show up without reprinting.</p>
+    <div class="qr-row" id="qr-box" hidden>
+      <div class="qr" id="qr" role="img"></div>
+      <div class="qr-side">
+        <p class="out"><a id="qr-url" target="_blank" rel="noopener"></a></p>
+        <div class="row"><button class="btn ghost" type="button" id="download-qr" data-i18n="qr.download">Download SVG</button></div>
+      </div>
+    </div>
+    <p class="hint" id="qr-empty" data-i18n="qr.empty">Fill in a valid lot code to draw the QR code.</p>
+  </section>
+
   <footer><p data-i18n="footer">The factory runs these same steps in Google Apps Script, inside its private spreadsheet. This page only shows them: it can't seal anything.</p></footer>
 </div>
+<script src="vendor/qrcodegen-1.8.0.js"></script>
 <script src="js/config.js?v=__V__"></script>
 <script src="js/build-i18n.js?v=__V__"></script>
 <script src="js/build.js?v=__V__"></script>
