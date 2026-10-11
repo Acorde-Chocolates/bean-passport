@@ -39,6 +39,7 @@ The public pages are bilingual for users: **English by default**, Portuguese thr
 | `site/index.html`, `site/home.css`, `site/js/home.js` | Home page: check a batch, live demo, how it works |
 | `site/lote/` | Public batch passport (`lote/?id=<lot>`): `index.html`, `app.js`, `i18n.js`, `style.css` |
 | `site/anchor.html`, `site/js/anchor.js` | Sealing page used by Acorde to seal a step with Phantom. Internal, English only |
+| `site/build.html`, `site/js/build.js`, `site/js/build-i18n.js` | Public demo: builds the record, hash and memo from production numbers the way the Apps Script does, and compares the memo with the seal on devnet. Never signs |
 | `site/js/config.js` | Cluster, RPC, Memo program, issuer wallets, explorer and page URLs. Shared by every page |
 | `site/vendor/solana-web3-1.98.4.iife.min.js` | Pinned `@solana/web3.js`, vendored (sha256 matches npm) |
 | `site/spec/canonical-record-v1.md` | The canonical record format: the contract between generator and verifier |
@@ -104,7 +105,7 @@ console.log(t===k.canonical&&c.createHash("sha256").update(t,"utf8").digest("hex
 - **Pin every dependency** and vendor it under `site/vendor/` with the version in the file name.
 - **Cache busting:** every local CSS or JS reference in an HTML file ends with `?v=__V__`. The deploy replaces it with the short commit SHA, so a new deploy never mixes old and new files. Add it to any new reference. Vendored files carry the version in their file name instead.
 - **Batch files** are loaded with `?t=<timestamp>` and `cache: "no-store"`, so new anchors show up right after the deploy.
-- **New UI strings** go into `site/lote/i18n.js` or `site/js/home.js`, in both `en` and `pt`.
+- **New UI strings** go into `site/lote/i18n.js`, `site/js/home.js` or the page's own `site/js/*-i18n.js`, in both `en` and `pt`.
 - **Prefer clear names over comments.** Don't add new explanatory comments; existing ones must be in English.
 - **Escape everything** that comes from a batch file or the network before it reaches `innerHTML`.
 - **Commits and PRs** follow `.agents/skills/git-commit` and `.agents/skills/git-pr`: Conventional Commits in English, and no bot or AI attribution lines.
