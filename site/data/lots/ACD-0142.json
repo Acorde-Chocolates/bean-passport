@@ -11,7 +11,7 @@
     "steps": [
       { "n": "1", "step": "roasting", "date": "2026-10-05", "input_g": "6300", "output_g": "6080", "byproduct_g": "", "units": "", "profile": "" },
       { "n": "2", "step": "winnowing", "date": "2026-10-07", "input_g": "6080", "output_g": "4302", "byproduct_g": "1602", "units": "", "profile": "" },
-      { "n": "3", "step": "grinding", "date": "2026-10-10", "input_g": "1010", "output_g": "", "byproduct_g": "", "units": "", "profile": "" }
+      { "n": "3", "step": "grinding", "date": "2026-10-10", "input_g": "1013", "output_g": "1518", "byproduct_g": "", "units": "", "profile": "" }
     ]
   },
   "anchors": [],
