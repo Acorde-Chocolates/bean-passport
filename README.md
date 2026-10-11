@@ -38,8 +38,8 @@ flowchart LR
 ```
 
 1. **Record.** When a production step is closed, the factory's spreadsheet builds a canonical record of the batch so far: product, producer code, origin, and for each step its date and weights in grams. Nothing personal or financial goes in.
-2. **Seal.** On the sealing page, the factory pastes the memo and the record, the page recomputes the hash and checks the content (step codes, dates, whole grams, at most five steps), and the factory approves one memo transaction in Phantom: `v1|<lot>|<step>|<sha256>`. The seal of step N covers the header and steps 1 to N, so changing an earlier step breaks every later seal.
-3. **Verify.** The passport reads the public batch file, rebuilds the canonical record from the strings it displays, hashes it in the browser and compares it with the memo read from Solana. A seal only counts if the factory's wallet paid for and signed the transaction. A network problem shows as "No connection", never as tampering.
+2. **Seal.** On the sealing page, the factory pastes the memo and the record, the page recomputes the hash and checks the content (step codes, dates, whole grams, at most five steps), and the official wallet signs one memo transaction in Phantom: `v1|<lot>|<step>|<sha256>`. The seal of step N covers the header and steps 1 to N, so changing an earlier step breaks every later seal.
+3. **Verify.** The passport reads the public batch file, rebuilds the canonical record from the strings it displays, hashes it in the browser and compares it with the memo read from Solana. A seal only counts if the official wallet paid for and signed the transaction. A network problem shows as "No connection", never as tampering.
 
 Each passport shows two dates per step: **produced on** (from the factory's records) and **sealed on** (the block time, which nobody can edit), with the gap in days. On the real batch, roasting and winnowing happened before Bean Passport existed and were sealed afterwards, and the page says so. From grinding on, each step is sealed the day it is completed.
 
@@ -51,7 +51,7 @@ A seal proves that the record has not changed since it was sealed, and when it w
 
 Without trusting our page:
 
-1. Open a passport and expand **Verify it yourself**. It shows the canonical record up to the last sealed step, the SHA-256 computed in your browser, the memo on chain and the factory's wallet.
+1. Open a passport and expand **Verify it yourself**. It shows the canonical record up to the last sealed step, the SHA-256 computed in your browser, the memo on chain and the official wallet.
 2. Recompute the hash in a terminal with the command shown there: `printf '%s' '<record>' | sha256sum`.
 3. Open the transaction on the Solana Explorer and compare the memo.
 
@@ -73,10 +73,11 @@ Every implementation must reproduce [`site/spec/test-vector-v1.json`](site/spec/
 
 ## Technical choices
 
-- **Solana Memo program** (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`) with the factory wallet as signer. No custom program to deploy or audit, and each seal costs about 0.00008 SOL including the priority fee Phantom adds.
+- **Solana Memo program** (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`) with the official wallet as signer. No custom program to deploy or audit, and each seal costs about 0.00008 SOL including the priority fee Phantom adds.
 - **The batch file never carries the expected hash.** The page trusts only the memo on chain, found by program id, and the fee payer's address.
 - **No build step.** Plain HTML, CSS and JavaScript served by GitHub Pages, so what runs in the browser is exactly what is in this repository. `@solana/web3.js` 1.98.4 is vendored in `site/vendor/`; its sha256 (`09cdbea951b2ed0e11bcbe3aeb1ee9f035f9fb51ed212aca645475ae82688cc3`) matches the npm package.
 - **Checked on every deploy.** `.github/workflows/pages.yml` runs `tools/check.mjs --chain` before publishing: the test vector, every batch file, its seals on devnet and the cache-busting stamps. If a check fails, the deploy stops and the current site stays online.
+- **Official wallet held by the team.** During the hackathon, Acorde's batches are sealed by a wallet held by the Bean Passport team, set as `issuer` in `site/js/config.js`. `TEST-*` batches use a separate test wallet. The passport only counts seals from the wallet configured for each batch.
 - **Devnet for the hackathon.** Sealing on mainnet waits until the record format has run on real batches, because a wrong format would also be sealed forever.
 
 ## Privacy
