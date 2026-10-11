@@ -26,7 +26,7 @@ const DICT = {
     "how.eyebrow": "Three steps",
     "how.title": "How it works",
     "how.1.title": "Record",
-    "how.1.text": "The factory's spreadsheet turns each closed production step into a canonical record: dates, weights in grams, origin. Nothing personal or financial.",
+    "how.1.text": "The factory's spreadsheet turns each closed production step into a canonical record: dates, weights in grams, origin. Nothing personal or financial. <a href=\"build.html\">See how a record is built →</a>",
     "how.2.title": "Seal",
     "how.2.text": 'The official wallet signs a Solana memo carrying the SHA-256 of that record. Each seal covers every earlier step, so a later edit breaks all the seals after it. <a href="anchor.html">For producers: seal a step →</a>',
     "how.3.title": "Verify",
@@ -37,6 +37,7 @@ const DICT = {
     "open.spec": "Canonical record spec v1",
     "open.vector": "Test vector",
     "open.anchor": "Sealing page (for producers)",
+    "open.build": "Build a seal step by step (demo)",
     footer: "Solana devnet · canonical record v1 · built for the Crypto World's Fair hackathon"
   },
   pt: {
@@ -62,7 +63,7 @@ const DICT = {
     "how.eyebrow": "Três etapas",
     "how.title": "Como funciona",
     "how.1.title": "Registrar",
-    "how.1.text": "A planilha da fábrica transforma cada etapa de produção concluída num registro canônico: datas, pesos em gramas, origem. Nada pessoal nem financeiro.",
+    "how.1.text": "A planilha da fábrica transforma cada etapa de produção concluída num registro canônico: datas, pesos em gramas, origem. Nada pessoal nem financeiro. <a href=\"build.html\">Veja como um registro é montado →</a>",
     "how.2.title": "Selar",
     "how.2.text": 'A carteira oficial assina um memo na Solana com o SHA-256 desse registro. Cada selo cobre todas as etapas anteriores, então uma edição posterior quebra todos os selos seguintes. <a href="anchor.html">Para produtores: selar uma etapa →</a>',
     "how.3.title": "Verificar",
@@ -73,6 +74,7 @@ const DICT = {
     "open.spec": "Especificação do registro canônico v1",
     "open.vector": "Vetor de teste",
     "open.anchor": "Página de selagem (para produtores)",
+    "open.build": "Monte um selo passo a passo (demonstração)",
     footer: "Solana devnet · registro canônico v1 · feito para o hackathon Crypto World's Fair"
   }
 };
