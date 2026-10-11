@@ -104,6 +104,46 @@ async function checkAnchorOnChain(where, config, record, anchor) {
   else if (signer !== issuer) fail(where, `step ${anchor.step} was signed by ${signer}, not by the issuer ${issuer}`);
 }
 
+const MEMO_RE = /^v1\|([A-Za-z0-9-]{1,32})\|([1-5])\|([0-9a-f]{64})$/;
+const HISTORY_PAGES = 5;
+const histories = new Map();
+
+function issuerHistory(config, wallet) {
+  if (!histories.has(wallet)) histories.set(wallet, (async () => {
+    const memos = [];
+    let before;
+    for (let page = 0; page < HISTORY_PAGES; page++) {
+      const batch = await rpc(config.rpcUrl, "getSignaturesForAddress", [wallet, { limit: 1000, before, commitment: "confirmed" }]);
+      for (const s of batch) {
+        if (s.err || !s.memo) continue;
+        for (const text of s.memo.split("; ")) memos.push({ text: text.replace(/^\[\d+\]\s*/, ""), signature: s.signature });
+      }
+      if (batch.length < 1000) return { memos, complete: true };
+      before = batch[batch.length - 1].signature;
+    }
+    return { memos, complete: false };
+  })());
+  return histories.get(wallet);
+}
+
+async function checkRepeatedSeals(where, config, lot) {
+  const issuer = config.issuerFor(lot);
+  if (!issuer) return;
+  const { memos, complete } = await issuerHistory(config, issuer);
+  if (!complete) warn(where, `only the latest ${HISTORY_PAGES * 1000} transactions of ${issuer} were searched for repeated seals`);
+  const hashesByStep = new Map();
+  for (const { text, signature } of memos) {
+    const m = text.match(MEMO_RE);
+    if (!m || m[1] !== lot) continue;
+    if (!hashesByStep.has(m[2])) hashesByStep.set(m[2], new Map());
+    hashesByStep.get(m[2]).set(m[3], signature);
+  }
+  const report = /^TEST-/.test(lot) ? warn : fail;
+  for (const [step, hashes] of hashesByStep) {
+    if (hashes.size > 1) report(where, `step ${step} was sealed by the issuer with ${hashes.size} different hashes (${[...hashes.values()].join(", ")}); the passport only shows the anchored one`);
+  }
+}
+
 async function checkLots(config) {
   const dir = join(SITE, "data/lots");
   const files = readdirSync(dir).filter(f => f.endsWith(".json"));
@@ -132,6 +172,10 @@ async function checkLots(config) {
         try { await checkAnchorOnChain(where, config, lot.record, a); }
         catch (e) { warn(where, `could not reach devnet to check step ${a.step} (${e.message}); not blocking`); }
       }
+    }
+    if (CHAIN && LOT_RE.test(lot.record.lot || "")) {
+      try { await checkRepeatedSeals(where, config, lot.record.lot); }
+      catch (e) { warn(where, `could not reach devnet to look for repeated seals (${e.message}); not blocking`); }
     }
   }
   return { files: files.length, anchors };
