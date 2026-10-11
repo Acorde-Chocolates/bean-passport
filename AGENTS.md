@@ -39,9 +39,10 @@ The public pages are bilingual for users: **English by default**, Portuguese thr
 | `site/index.html`, `site/home.css`, `site/js/home.js` | Home page: check a batch, live demo, how it works |
 | `site/lote/` | Public batch passport (`lote/?id=<lot>`): `index.html`, `app.js`, `i18n.js`, `style.css` |
 | `site/anchor.html`, `site/js/anchor.js` | Sealing page used by Acorde to seal a step with Phantom. Internal, English only |
-| `site/build.html`, `site/js/build.js`, `site/js/build-i18n.js` | Public demo: builds the record, hash and memo from production numbers the way the Apps Script does, and compares the memo with the seal on devnet. Never signs |
+| `site/build.html`, `site/js/build.js`, `site/js/build-i18n.js` | Public demo: builds the record, hash, memo and wrapper QR code from production numbers the way the Apps Script does, and compares the memo with the seal on devnet. Never signs |
 | `site/js/config.js` | Cluster, RPC, Memo program, issuer wallets, explorer and page URLs. Shared by every page |
 | `site/vendor/solana-web3-1.98.4.iife.min.js` | Pinned `@solana/web3.js`, vendored (sha256 matches npm) |
+| `site/vendor/qrcodegen-1.8.0.js` | Nayuki QR Code generator, byte for byte the same file as `apps-script/vendor/qrcodegen-1.8.0.gs`, so the build page draws the same QR as the Apps Script |
 | `site/spec/canonical-record-v1.md` | The canonical record format: the contract between generator and verifier |
 | `site/spec/test-vector-v1.json` | Cases every implementation must reproduce byte for byte |
 | `site/data/lots/<lot>.json` | Public batch files: `record` (exact strings) + `anchors` (step → signature) |
