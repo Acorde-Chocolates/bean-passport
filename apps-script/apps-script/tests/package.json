@@ -1,0 +1,13 @@
+{
+  "name": "bean-passport-apps-script-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:qr": "node qr.test.cjs",
+    "test": "node run.cjs"
+  },
+  "devDependencies": {
+    "jsqr": "1.4.0",
+    "sharp": "0.35.5"
+  }
+}
