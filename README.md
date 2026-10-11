@@ -24,7 +24,7 @@ A passport also has a simulation mode: add `simular=<scenario>` to its address a
 | Scenario | What the passport shows | Open |
 |---|---|---|
 | Batch in production: 3 steps recorded, 2 sealed | Steps 1 and 2 verified, step 3 not sealed yet | [producao](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=producao) |
-| Every recorded step sealed | Every step verified | [concluido](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=concluido) |
+| Every recorded step sealed | Steps 1 to 3 verified, steps 4 and 5 not recorded yet | [concluido](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=concluido) |
 | A sealed number edited afterwards (step 2 output) | "Changed" on step 2 and on every later step | [alterado](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=alterado) |
 | Step 3 sealed by a wallet that is not the official one | "Other wallet" on step 3 | [outra-carteira](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=outra-carteira) |
 | Step 3 signature missing from the chain | "Seal not found" on step 3 | [selo-nao-encontrado](https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026&simular=selo-nao-encontrado) |
