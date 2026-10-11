@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bean Passport · Build a seal</title>
+<meta name="description" content="See how a production step becomes a canonical record, a SHA-256 fingerprint and the memo sealed on Solana.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #F3F0EB; --surface: #FFFFFF; --ink: #1E1A16; --muted: #6B6158; --line: #E3DCD2; --code-bg: #F6F2EC;
+  --saffron: #F2A93B; --ok: #1D7A4F; --ok-bg: #E2F2E9; --bad: #B3261E; --bad-bg: #FBE7E4; --warn: #965800; --warn-bg: #FCEFD6;
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14110E; --surface: #1D1915; --ink: #F1EBE2; --muted: #A89D90; --line: #38312A; --code-bg: #26211C;
+    --ok: #5FCB95; --ok-bg: #15321F; --bad: #FF8B7B; --bad-bg: #3B1915; --warn: #F2B653; --warn-bg: #36280F;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--body); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 18px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font: 800 clamp(34px, 6vw, 48px)/.95 var(--display); text-transform: uppercase; }
+header p { margin: 0; color: var(--muted); max-width: 66ch; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lang { display: inline-flex; flex: none; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.lang button { font: 700 12px/1 var(--body); letter-spacing: .08em; padding: 9px 12px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.home-link { justify-self: start; font: 600 13px/1 var(--body); color: var(--muted); text-decoration: none; }
+.home-link:hover { color: var(--ink); }
+.badge { justify-self: start; font: 600 12px/1 var(--body); padding: 6px 10px; border-radius: 999px; background: var(--saffron); color: #1E1A16; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.card h2 { margin: 0; font: 700 16px/1.3 var(--body); display: flex; gap: 10px; align-items: baseline; }
+.card h2 span:first-child { font: 500 12px/1 var(--mono); color: var(--muted); }
+.card p { margin: 0; }
+.hint { font-size: 13px; color: var(--muted); }
+label { display: grid; gap: 6px; font: 600 13px/1.2 var(--body); }
+input, select { width: 100%; min-width: 0; font: 400 13px/1.5 var(--mono); padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--code-bg); color: var(--ink); }
+select { width: auto; font-family: var(--body); }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { font: 600 14px/1 var(--body); padding: 11px 16px; border-radius: 999px; cursor: pointer; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.msg { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: var(--code-bg); }
+.msg[data-kind="ok"] { background: var(--ok-bg); color: var(--ok); }
+.msg[data-kind="bad"] { background: var(--bad-bg); color: var(--bad); }
+.msg[data-kind="warn"] { background: var(--warn-bg); color: var(--warn); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+th { font-weight: 600; color: var(--muted); white-space: nowrap; }
+tbody th { color: var(--ink); }
+td input { padding: 7px 9px; }
+td input.col-date { min-width: 140px; }
+td input.col-input, td input.col-output, td input.col-byproduct { min-width: 88px; }
+td input.col-units { min-width: 64px; }
+td input.col-profile { min-width: 96px; }
+.notes { margin: 0; padding-left: 20px; display: grid; gap: 4px; font: 400 13px/1.45 var(--mono); }
+.notes li.err { color: var(--bad); font-family: var(--body); font-size: 14px; }
+pre, .out { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); font: 400 13px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
+.out.big { font-size: 15px; font-weight: 500; }
+.links { display: grid; gap: 8px; font: 600 14px/1.3 var(--body); }
+a { color: inherit; }
+footer { font-size: 13px; color: var(--muted); }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <a class="home-link" href="./" data-i18n="home">← Bean Passport home</a>
+      <div class="lang" role="group" data-i18n-aria="lang.label" aria-label="Language">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="pt" lang="pt-BR" aria-pressed="false">PT</button>
+      </div>
+    </div>
+    <div class="eyebrow" data-i18n="eyebrow">Bean Passport · how a seal is built</div>
+    <h1 data-i18n="heading">Build a seal</h1>
+    <p data-i18n="intro">This page does in your browser what the factory's Apps Script does inside its spreadsheet: it turns production numbers into the canonical record, its SHA-256 fingerprint and the memo that gets sealed on Solana.</p>
+    <span class="badge" data-i18n="badge">Demo: nothing is sent or sealed</span>
+    <p class="msg" id="vector-msg" hidden></p>
+  </header>
+
+  <section class="card" aria-labelledby="start-title">
+    <h2 id="start-title"><span>0</span><span data-i18n="start.title">Start from</span></h2>
+    <p class="hint" data-i18n="start.hint">Load a published batch, then change any number and watch the fingerprint change.</p>
+    <div class="row">
+      <button class="btn" type="button" id="load-test" data-i18n="start.test">Practice batch TEST-0001 (sealed on devnet)</button>
+      <button class="btn ghost" type="button" id="load-real" data-i18n="start.real">Real batch ACD-0142</button>
+      <button class="btn ghost" type="button" id="load-blank" data-i18n="start.blank">Blank</button>
+    </div>
+    <p class="msg" id="start-msg" hidden></p>
+  </section>
+
+  <section class="card" id="numbers" aria-labelledby="numbers-title">
+    <h2 id="numbers-title"><span>1</span><span data-i18n="numbers.title">Production numbers</span></h2>
+    <p class="hint" data-i18n="numbers.hint">As the factory's spreadsheet has them: weights in kilograms with a dot for decimals, dates as dates. Leave a step blank if it hasn't happened yet.</p>
+    <div class="fields">
+      <label for="h-lot"><span data-i18n="f.lot">Lot</span><input id="h-lot" autocomplete="off" spellcheck="false"></label>
+      <label for="h-product"><span data-i18n="f.product">Product</span><input id="h-product" autocomplete="off" spellcheck="false"></label>
+      <label for="h-producer"><span data-i18n="f.producer">Producer code</span><input id="h-producer" autocomplete="off" spellcheck="false"></label>
+      <label for="h-municipality"><span data-i18n="f.municipality">Municipality</span><input id="h-municipality" autocomplete="off" spellcheck="false"></label>
+      <label for="h-state"><span data-i18n="f.state">State</span><input id="h-state" autocomplete="off" spellcheck="false"></label>
+      <label for="h-origin_lot"><span data-i18n="f.origin_lot">Origin lot</span><input id="h-origin_lot" autocomplete="off" spellcheck="false"></label>
+      <label for="h-purchase_date"><span data-i18n="f.purchase_date">Purchase date</span><input id="h-purchase_date" type="date"></label>
+    </div>
+    <div class="table-wrap"><table id="steps"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="norm-title">
+    <h2 id="norm-title"><span>2</span><span data-i18n="norm.title">Normalize</span></h2>
+    <p class="hint" data-i18n="norm.hint">The same rules as the Apps Script: kilograms become whole grams, text is trimmed and put in Unicode NFC, dates are yyyy-MM-dd.</p>
+    <ul class="notes" id="notes" hidden></ul>
+    <p class="hint" id="norm-none" data-i18n="norm.none">Nothing to rewrite: every value is already in canonical form.</p>
+  </section>
+
+  <section class="card" aria-labelledby="canon-title">
+    <h2 id="canon-title"><span>3</span><span data-i18n="canon.title">Canonical record</span></h2>
+    <p class="hint" data-i18n="canon.hint">A JSON array of strings in a fixed order, without spaces: the exact bytes that get hashed. The seal of step N covers the header and steps 1 to N.</p>
+    <label for="up-to" class="row"><span data-i18n="canon.upTo">Seal up to step</span><select id="up-to"></select></label>
+    <pre id="canonical">—</pre>
+    <div class="row"><button class="btn ghost" type="button" id="copy-canonical" data-i18n="copy">Copy</button></div>
+  </section>
+
+  <section class="card" aria-labelledby="hash-title">
+    <h2 id="hash-title"><span>4</span><span data-i18n="hash.title">SHA-256 fingerprint</span></h2>
+    <p class="hint" data-i18n="hash.hint">Computed in your browser from the bytes above. Change one gram and the whole fingerprint changes.</p>
+    <p class="out big" id="hash">—</p>
+  </section>
+
+  <section class="card" aria-labelledby="memo-title">
+    <h2 id="memo-title"><span>5</span><span data-i18n="memo.title">Memo</span></h2>
+    <p class="hint" data-i18n="memo.hint">What the official wallet signs on Solana: version, lot, step and fingerprint.</p>
+    <p class="out" id="memo">—</p>
+    <div class="row"><button class="btn ghost" type="button" id="copy-memo" data-i18n="copy">Copy</button></div>
+    <p class="msg" id="chain-msg" hidden></p>
+    <div class="links">
+      <a id="next-passport" hidden></a>
+      <a href="anchor.html" data-i18n="next.anchor">Paste it on the sealing page →</a>
+      <a href="https://github.com/Acorde-Chocolates/bean-passport/tree/main/apps-script" data-i18n="next.apps">Apps Script source on GitHub →</a>
+    </div>
+  </section>
+
+  <footer><p data-i18n="footer">The factory runs these same steps in Google Apps Script, inside its private spreadsheet. This page only shows them: it can't seal anything.</p></footer>
+</div>
+<script src="js/config.js?v=__V__"></script>
+<script src="js/build-i18n.js?v=__V__"></script>
+<script src="js/build.js?v=__V__"></script>
+</body>
+</html>
