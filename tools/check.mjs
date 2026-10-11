@@ -13,7 +13,7 @@ const STEP_CODES = ["roasting", "winnowing", "grinding", "tempering_molding", "p
 const WEIGHTS = ["input_g", "output_g", "byproduct_g", "units"];
 const LOT_RE = /^[A-Za-z0-9-]{1,32}$/;
 const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{64,90}$/;
-const PAGES = ["index.html", "anchor.html", "lote/index.html"];
+const PAGES = ["index.html", "anchor.html", "build.html", "lote/index.html"];
 
 const failures = [];
 const warnings = [];
