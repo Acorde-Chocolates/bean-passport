@@ -14,7 +14,7 @@ Built for the **Crypto World's Fair** hackathon (Colosseum), Solana track. Runs 
 | Passport of a practice batch, 2 steps sealed on devnet | https://acorde-chocolates.github.io/bean-passport/lote/?id=TEST-0001 |
 | Passport of the real MPB batch (sealing in progress) | https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026 |
 | Sealing page used by the factory | https://acorde-chocolates.github.io/bean-passport/anchor.html |
-| How a seal is built, in your browser: what the factory's Apps Script does, from weights in kilograms to the memo | https://acorde-chocolates.github.io/bean-passport/build.html |
+| How a seal is built, in your browser: what the factory's Apps Script does, from weights in kilograms to the memo and the QR code | https://acorde-chocolates.github.io/bean-passport/build.html |
 
 The pages are in English by default, with Portuguese through the EN | PT toggle. On a passport, open **Verify it yourself**, or use **Try changing a number** to watch the seals of that step and every later step fail.
 
@@ -128,7 +128,7 @@ Open `http://localhost:8000/`. Don't open the files with `file://`: Web Crypto a
 | `site/js/config.js` | Network, RPC, Memo program and issuer wallets |
 | `site/spec/` | Canonical record format and test vector |
 | `site/data/lots/` | Public batch files: the record and one anchor per sealed step |
-| `site/vendor/` | Pinned `@solana/web3.js` |
+| `site/vendor/` | Pinned `@solana/web3.js` and the Nayuki QR Code generator (the same file as `apps-script/vendor/`) |
 | `apps-script/` | Google Apps Script layer that builds records and memos from the spreadsheet (in progress) |
 | `tools/check.mjs` | Checks run before every deploy |
 | `design/mockups/` | Clickable mockups of the public page (not published on Pages) |
@@ -145,4 +145,4 @@ Open `http://localhost:8000/`. Don't open the files with `file://`: Web Crypto a
 
 ## License
 
-[MIT](LICENSE). Includes [`@solana/web3.js`](https://github.com/solana-foundation/solana-web3.js) 1.98.4 (MIT), vendored unchanged.
+[MIT](LICENSE). Includes [`@solana/web3.js`](https://github.com/solana-foundation/solana-web3.js) 1.98.4 (MIT) and the [Nayuki QR Code generator](https://www.nayuki.io/page/qr-code-generator-library) 1.8.0 (MIT), vendored unchanged.
