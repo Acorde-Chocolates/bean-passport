@@ -143,7 +143,7 @@ async function main() {
     const header = value => Object.fromEntries(headerFields.map(field => [field, value[field]]));
     assert.deepEqual(header(record), header(published));
     assert.equal(record.product, 'Barra MPB 60 g');
-    assert.deepEqual(JSON.parse(JSON.stringify(record.steps.slice(0, 2))), published.steps.slice(0, 2));
+    assert.deepEqual(JSON.parse(JSON.stringify(record.steps)), published.steps);
     assert.deepEqual(JSON.parse(JSON.stringify(record.steps.slice(2))).map(step =>
       stepFields.map(field => step[field])), [
       ['3', 'grinding', '2026-10-10', '1013', '1518', '', '', ''],
