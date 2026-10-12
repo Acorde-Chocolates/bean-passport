@@ -475,7 +475,7 @@ async function trocarIdioma(lang) {
 async function iniciar() {
   aplicarTextosFixos();
   const params = new URLSearchParams(location.search);
-  const id = params.get("id") || "";
+  const id = (params.get("id") || "").toUpperCase();
 
   if (!FORMATO_LOTE.test(id)) {
     $("#lot").textContent = "—";
