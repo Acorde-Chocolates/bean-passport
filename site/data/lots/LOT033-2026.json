@@ -16,6 +16,27 @@
       { "n": "5", "step": "packaging", "date": "2026-10-10", "input_g": "240", "output_g": "240", "byproduct_g": "", "units": "4", "profile": "" }
     ]
   },
-  "anchors": [],
+  "anchors": [
+    {
+      "step": "1",
+      "signature": "54gMMtHEVqG6FCMqLhwEqoFVuFwJqRhKSK2HQWSzyP6uTLyRYbzCpEDXZqgzMonPPfdonuoRj93K412dkC7k7nEW"
+    },
+    {
+      "step": "2",
+      "signature": "3LUGhLqqNdSeM9VTHejjnoN118owCtTnfLi7vAP8mJazLNG5VPnS7ZaavNurRjhRciCCaJGFtaBeV1yNntqYxia2"
+    },
+    {
+      "step": "3",
+      "signature": "Ft8PqtsFDb5pqs9ukxv8S8CPiKVaUmicYHvvYXnq7furf5Yjbk791bUDuYfqcQvXgFQrHuyrv4YdxHAxBzJA7vL"
+    },
+    {
+      "step": "4",
+      "signature": "61H5jfX9wjom3SbzgpfE54hQcaPUErMSVMbdea43ybXdRbAE8qscCpmVzyexcfYJecCREjSoSiAKUgNrnjgZLGog"
+    },
+    {
+      "step": "5",
+      "signature": "4hdtNH2gAZkcKJygqVfga5EvHNKQ8cogS9169jUDLgRQAiFkJTMcSRE6tDZYYUMbi9pXcVmESiZZDGn1iPycWfJe"
+    }
+  ],
   "exported_at": "2026-10-11T18:29:00-03:00"
 }
