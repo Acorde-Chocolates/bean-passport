@@ -254,9 +254,9 @@ function setWallet(publicKey) {
   $("wallet-address").innerHTML = `<a href="${CFG.explorerAddress(address)}" target="_blank" rel="noopener">${esc(address)}</a>`;
   $("wallet-info").hidden = false;
   log(`Connected: ${address}`);
-  if (CFG.testIssuer === address) say("issuer-msg", "ok", "issuer.test");
+  if (CFG.issuer === address) say("issuer-msg", "ok", "issuer.acorde");
+  else if (CFG.testIssuer === address) say("issuer-msg", "ok", "issuer.test");
   else if (!CFG.issuer) say("issuer-msg", "warn", "issuer.unset");
-  else if (CFG.issuer === address) say("issuer-msg", "ok", "issuer.acorde");
   else say("issuer-msg", "warn", "issuer.other");
   updateSealButton();
   refreshBalance();
