@@ -86,7 +86,7 @@ Phantom must be in Testnet Mode with **Solana Devnet** selected. If its approval
 node tools/check.mjs --chain
 ```
 
-The deploy runs the same check. It fails on a broken record, a changed sealed value, a signature pasted on the wrong step, a duplicate anchor, a step of a real batch that the issuer sealed with more than one hash, a missing `?v=__V__` or a changed test vector. Repeated seals on `TEST-*` batches only warn. If devnet is unreachable it only warns.
+The deploy runs the same check. It fails on a broken record, a changed sealed value, a signature pasted on the wrong step, a duplicate anchor, a step of a real batch that the issuer sealed with more than one hash (except the seals in `SUPERSEDED_SEALS` in `tools/check.mjs`: today only LOT033-2026 step 3 from Oct 11, a practice seal made before that wallet became the issuer), a missing `?v=__V__` or a changed test vector. Repeated seals on `TEST-*` batches only warn. If devnet is unreachable it only warns.
 
 ## Check the contract by hand
 
