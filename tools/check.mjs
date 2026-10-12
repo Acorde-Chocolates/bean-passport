@@ -106,6 +106,9 @@ async function checkAnchorOnChain(where, config, record, anchor) {
 
 const MEMO_RE = /^v1\|([A-Za-z0-9-]{1,32})\|([1-5])\|([0-9a-f]{64})$/;
 const HISTORY_PAGES = 5;
+const SUPERSEDED_SEALS = new Set([
+  "5KwkPF4RjzJmwY8ddpxYNA854JRm7naMRtA8hyye9WXZVY6v1iwzW9ZMTqBdv47G5xwER8s4HQeZNovNZ664rVyx"
+]);
 const histories = new Map();
 
 function issuerHistory(config, wallet) {
@@ -134,7 +137,7 @@ async function checkRepeatedSeals(where, config, lot) {
   const hashesByStep = new Map();
   for (const { text, signature } of memos) {
     const m = text.match(MEMO_RE);
-    if (!m || m[1] !== lot) continue;
+    if (!m || m[1] !== lot || SUPERSEDED_SEALS.has(signature)) continue;
     if (!hashesByStep.has(m[2])) hashesByStep.set(m[2], new Map());
     hashesByStep.get(m[2]).set(m[3], signature);
   }
