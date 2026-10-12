@@ -135,9 +135,15 @@ function setLang(next) {
 }
 
 document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+const lotInput = document.getElementById("lot-id");
+lotInput.addEventListener("input", () => {
+  const { selectionStart, selectionEnd } = lotInput;
+  lotInput.value = lotInput.value.toUpperCase();
+  lotInput.setSelectionRange(selectionStart, selectionEnd);
+});
 document.getElementById("check").addEventListener("submit", e => {
   e.preventDefault();
-  const id = document.getElementById("lot-id").value.trim();
+  const id = lotInput.value.trim().toUpperCase();
   const msg = document.getElementById("check-msg");
   if (!id) { msg.textContent = t("check.empty"); return; }
   if (!FORMAT.test(id)) { msg.textContent = t("check.invalid"); return; }
