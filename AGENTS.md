@@ -59,7 +59,7 @@ The public pages are bilingual for users: **English by default**, Portuguese thr
 - **One seal per step.** The seal for step N covers the header and steps 1..N, so changing an earlier step breaks every later seal.
 - **Sealed data is never edited.** Once a step is sealed, its values in the batch file must not change; the page would show it as "Changed".
 - **The page trusts only the chain.** It recomputes the hash in the browser from the strings it displays and compares it with the memo; the batch file never carries the expected hash.
-- **Only the issuer's seals count.** The fee payer (`accountKeys[0]`) must be the issuer for that lot: the official wallet for real lots (held by the team, it seals Acorde's batches), the team's test wallet for `TEST-*` lots (`config.js`).
+- **Only the issuer's seals count.** The fee payer (`accountKeys[0]`) must be the issuer for that lot: the official wallet for real lots (held by the team, it seals Acorde's batches), the `testIssuer` for `TEST-*` lots (`config.js`). Today both slots hold the same wallet, so the sealing page greets it as the official one.
 - **Find the memo by program id, never by instruction index.** Phantom adds ComputeBudget instructions before it.
 - **A network error is not tampering.** Keep "No connection" separate from "Changed".
 - **Devnet only** for this submission.
