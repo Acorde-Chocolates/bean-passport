@@ -5,7 +5,7 @@ function buildMpbRecordV1() {
     producer: 'FOR004',
     municipality: 'Ibirapitanga',
     state: 'BA',
-    origin_lot: '',
+    origin_lot: '4/2026',
     purchase_date: '2026-07-04'
   };
   const facts = [
