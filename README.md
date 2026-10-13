@@ -10,6 +10,10 @@ Built for the **Crypto World's Fair** hackathon (Colosseum), Solana track. Runs 
   <img src="docs/cover.png" width="380" alt="Passport of batch LOT033-2026: unchanged since sealed, 5 of 5 steps sealed by the official wallet on Solana devnet">
 </p>
 
+<p align="center">
+  <a href="https://youtu.be/kWrdEZLUICU"><b>Technical demo</b></a> · <a href="https://youtu.be/L7XU-oYETK8"><b>Pitch</b></a>
+</p>
+
 ## Live demo
 
 No login or wallet needed: every page opens in any phone or desktop browser.
