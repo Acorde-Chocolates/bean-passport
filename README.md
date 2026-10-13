@@ -6,17 +6,37 @@
 
 Built for the **Crypto World's Fair** hackathon (Colosseum), Solana track. Runs on Solana **devnet**.
 
+<p align="center">
+  <img src="docs/cover.png" width="380" alt="Passport of batch LOT033-2026: unchanged since sealed, 5 of 5 steps sealed by the official wallet on Solana devnet">
+</p>
+
 ## Live demo
+
+No login or wallet needed: every page opens in any phone or desktop browser.
 
 | | Link |
 |---|---|
 | Home | https://acorde-chocolates.github.io/bean-passport/ |
 | Passport of a practice batch, 2 steps sealed on devnet | https://acorde-chocolates.github.io/bean-passport/lote/?id=TEST-0001 |
-| Passport of the real MPB batch (sealing in progress) | https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026 |
+| Passport of the real MPB batch, 5 steps sealed on devnet | https://acorde-chocolates.github.io/bean-passport/lote/?id=LOT033-2026 |
 | Sealing page used by the factory | https://acorde-chocolates.github.io/bean-passport/anchor.html |
 | How a seal is built, in your browser: what the factory's Apps Script does, from weights in kilograms to the memo and the QR code | https://acorde-chocolates.github.io/bean-passport/build.html |
 
 The pages are in English by default, with Portuguese through the EN | PT toggle. On a passport, open **Verify it yourself**, or use **Try changing a number** to watch the seals of that step and every later step fail.
+
+### The real batch: LOT033-2026
+
+Acorde's first batch sealed on chain: 6.3 kg of cacao from the producer's origin lot 4/2026 (Ibirapitanga, Bahia), received on July 4, 2026.
+
+| Step | Produced on | Weights | Seal |
+|---|---|---|---|
+| 1. Roasting | Oct 5 | 6,300 g → 6,080 g | [tx](https://explorer.solana.com/tx/54gMMtHEVqG6FCMqLhwEqoFVuFwJqRhKSK2HQWSzyP6uTLyRYbzCpEDXZqgzMonPPfdonuoRj93K412dkC7k7nEW?cluster=devnet) |
+| 2. Winnowing | Oct 7 | 6,080 g → 4,302 g of nibs | [tx](https://explorer.solana.com/tx/3LUGhLqqNdSeM9VTHejjnoN118owCtTnfLi7vAP8mJazLNG5VPnS7ZaavNurRjhRciCCaJGFtaBeV1yNntqYxia2?cluster=devnet) |
+| 3. Grinding and conching (melanger, 53 h) | Oct 10 | 1,013 g of nibs + 505 g of other ingredients → 1,518 g | [tx](https://explorer.solana.com/tx/Ft8PqtsFDb5pqs9ukxv8S8CPiKVaUmicYHvvYXnq7furf5Yjbk791bUDuYfqcQvXgFQrHuyrv4YdxHAxBzJA7vL?cluster=devnet) |
+| 4. Tempering and molding | Oct 10 | 240 g → 4 bars | [tx](https://explorer.solana.com/tx/61H5jfX9wjom3SbzgpfE54hQcaPUErMSVMbdea43ybXdRbAE8qscCpmVzyexcfYJecCREjSoSiAKUgNrnjgZLGog?cluster=devnet) |
+| 5. Packaging | Oct 10 | 4 bars, 240 g | [tx](https://explorer.solana.com/tx/4hdtNH2gAZkcKJygqVfga5EvHNKQ8cogS9169jUDLgRQAiFkJTMcSRE6tDZYYUMbi9pXcVmESiZZDGn1iPycWfJe?cluster=devnet) |
+
+The other 1,278 g of chocolate from step 3 is maturing for later bars. All five steps were sealed on October 12, after production; the passport shows both dates and the gap. Step 3 also has an earlier memo from the official wallet ([Oct 11](https://explorer.solana.com/tx/5KwkPF4RjzJmwY8ddpxYNA854JRm7naMRtA8hyye9WXZVY6v1iwzW9ZMTqBdv47G5xwER8s4HQeZNovNZ664rVyx?cluster=devnet)), made before the origin lot was added to the record. It is listed as superseded in `tools/check.mjs` and the passport ignores it.
 
 ### Try every status
 
@@ -55,7 +75,7 @@ flowchart LR
 2. **Seal.** On the sealing page, the factory pastes the memo and the record, the page recomputes the hash and checks the content (step codes, dates, whole grams, at most five steps), and the official wallet signs one memo transaction in Phantom: `v1|<lot>|<step>|<sha256>`. The seal of step N covers the header and steps 1 to N, so changing an earlier step breaks every later seal.
 3. **Verify.** The passport reads the public batch file, rebuilds the canonical record from the strings it displays, hashes it in the browser and compares it with the memo read from Solana. A seal only counts if the official wallet paid for and signed the transaction. A network problem shows as "No connection", never as tampering.
 
-Each passport shows two dates per step: **produced on** (from the factory's records) and **sealed on** (the block time, which nobody can edit), with the gap in days. On the real batch, roasting and winnowing happened before Bean Passport existed and were sealed afterwards, and the page says so. From grinding on, each step is sealed the day it is completed.
+Each passport shows two dates per step: **produced on** (from the factory's records) and **sealed on** (the block time, which nobody can edit), with the gap in days. On the real batch, every step was produced before it was sealed (Oct 5–10, sealed Oct 12), and the page shows the gap. From the next batch on, each step is sealed the day it closes.
 
 ## What a seal proves, and what it doesn't
 
@@ -84,6 +104,17 @@ The format is a small, open contract between whoever generates a record and whoe
 ```
 
 Every implementation must reproduce [`site/spec/test-vector-v1.json`](site/spec/test-vector-v1.json) byte for byte. Steps are fixed: `roasting`, `winnowing`, `grinding` (with conching, in the melanger), `tempering_molding` and `packaging`.
+
+## Stack
+
+- **Solana devnet**, SPL Memo program, no custom program
+- **@solana/web3.js** 1.98.4, vendored
+- **Phantom** to sign each seal with the official wallet
+- **Web Crypto API** for SHA-256 in the visitor's browser
+- **Plain HTML, CSS and JavaScript** on GitHub Pages, deployed by GitHub Actions
+- **Google Apps Script** and the Nayuki QR Code generator on the factory side
+- **Node.js** for the deploy checks (`tools/check.mjs`)
+- **Claude Code** as coding agent (`AGENTS.md`, `CLAUDE.md`, `.claude/`)
 
 ## Technical choices
 
@@ -129,9 +160,10 @@ Open `http://localhost:8000/`. Don't open the files with `file://`: Web Crypto a
 | `site/spec/` | Canonical record format and test vector |
 | `site/data/lots/` | Public batch files: the record and one anchor per sealed step |
 | `site/vendor/` | Pinned `@solana/web3.js` and the Nayuki QR Code generator (the same file as `apps-script/vendor/`) |
-| `apps-script/` | Google Apps Script layer that builds records and memos from the spreadsheet (in progress) |
+| `apps-script/` | Google Apps Script layer that builds records, memos and QR codes from the spreadsheet, with tests |
 | `tools/check.mjs` | Checks run before every deploy |
 | `design/mockups/` | Clickable mockups of the public page (not published on Pages) |
+| `docs/` | Images used by this README |
 | `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/` | Guide and shared skills for coding agents |
 
 ## Team
